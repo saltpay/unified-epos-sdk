@@ -1,3 +1,8 @@
 .idea/
 .kotlin/
 .DS_Store
+
+# Xcode
+xcuserdata/
+DerivedData/
+*.xcuserstate
