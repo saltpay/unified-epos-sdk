@@ -15,17 +15,18 @@ Documentation for the SDK using PosLink on Android can be found [here](https://d
 
 1. Clone the repository and open the `android-samples/poslink/EposPosLinkExample` project in Android Studio.
 
-2. Add your credentials in `TeyaUtils.kt`:
-   ```kotlin
-   val teyaPosLinkSDK = TeyaPosLinkSDK(
-       isProductionEnv = false,
-       authConfig = PosLinkSDK.AuthConfig.Managed(
-           clientId = "YOUR_CLIENT_ID",
-           clientSecret = "YOUR_CLIENT_SECRET"
-       ),
-       // ...
-   )
-   ```
+2. Add your credentials in `TeyaUtils.kt` by setting `clientId` and `clientSecret` in the `AuthConfig.Managed` block.
+    ```kotlin
+       val teyaPosLinkSDK = TeyaPosLinkSDK(
+           isProductionEnv = false,
+           authConfig = PosLinkSDK.AuthConfig.Managed(
+               clientId = "YOUR_CLIENT_ID",
+               clientSecret = "YOUR_CLIENT_SECRET"
+           ),
+           // ...
+       )
+    ```
+   > **Important:** Do not commit your credentials to version control. Keep them in a local, untracked file (e.g. `local.properties` or environment variables) and reference them from your build configuration.
 
 3. Build and run the app on an Android device.
 
