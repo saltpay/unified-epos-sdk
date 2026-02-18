@@ -2,6 +2,8 @@
 
 Sample apps demonstrating integration with the [Teya Unified ePOS SDK](https://docs.teya.com/epos-sdk/overview). Each app showcases a simple point-of-sale flow, browsing a product catalog, adding items to a basket, processing a payment with optional tip, and printing a receipt.
 
+> These apps are provided as integration examples and are not intended for production use.
+
 ## Sample Apps
 
 | App                                                           | Platform | SDK Type | Tech Stack | Key Features |

@@ -7,7 +7,7 @@ Documentation for the SDK using PosLink on iOS can be found [here](https://docs.
 ## Prerequisites
 
 - Xcode
-- iOS 16.0+
+- iOS 17.0+
 - A Teya terminal to which you can link the app
 - Client credentials (`clientId` and `clientSecret`) from [partner.teya.xyz](https://partner.teya.xyz) (development environment)
 
@@ -15,8 +15,8 @@ Documentation for the SDK using PosLink on iOS can be found [here](https://docs.
 
 1. Clone the repository and open the `ios-samples/poslink/EposPosLinkExample` project in Xcode.
 
-2. Add your credentials in `TeyaService.swift`:
-   ```swift
+2. Add your credentials in `TeyaService.swift` by setting `clientId` and `clientSecret` in the `PosLinkSDKAuthConfigManaged` initializer.
+    ```swift
    let teyaPosLinkSDK = TeyaPosLinkSDKKt.initialize(
        authConfig: PosLinkSDKAuthConfigManaged(
            clientId: "YOUR_CLIENT_ID",
@@ -25,7 +25,8 @@ Documentation for the SDK using PosLink on iOS can be found [here](https://docs.
        isProductionEnv: false,
        // ...
    )
-   ```
+    ```
+   > **Important:** Do not commit your credentials to version control. Store them in a local, untracked configuration file.
 
 3. Build and run the app on an iOS device.
 
