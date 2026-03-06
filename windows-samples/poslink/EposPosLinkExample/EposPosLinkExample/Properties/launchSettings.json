@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "EposPosLinkExample (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "EposPosLinkExample (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

@@ -11,6 +11,7 @@ Sample apps demonstrating integration with the [Teya Unified ePOS SDK](https://d
 | [Android AIO](android-samples/aio/EposAioExample)             | Android | All-In-One | Kotlin, Jetpack Compose | Payment, receipt printing |
 | [Android PosLink](android-samples/poslink/EposPosLinkExample) | Android | PosLink | Kotlin, Jetpack Compose | Payment, receipt printing, auth management |
 | [iOS PosLink](ios-samples/poslink/EposPosLinkExample)         | iOS | PosLink | Swift, SwiftUI | Payment, receipt printing, auth management |
+| [Windows PosLink](windows-samples/poslink/EposPosLinkExample) | Windows | PosLink | C#, WinUI 3 | Payment, receipt printing, auth management |
 
 ## Getting Started
 
@@ -18,3 +19,4 @@ Pick a sample app for your platform and SDK type, then follow the README in the 
 
 - [Android samples](android-samples/)
 - [iOS samples](ios-samples/)
+- [Windows samples](windows-samples/)
