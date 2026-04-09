@@ -44,7 +44,7 @@ android {
 }
 
 dependencies {
-    implementation("com.teya.epos:unified-sdk-all-in-one:1.3.2")
+    implementation("com.teya.epos:unified-sdk-all-in-one:1.4.0")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
