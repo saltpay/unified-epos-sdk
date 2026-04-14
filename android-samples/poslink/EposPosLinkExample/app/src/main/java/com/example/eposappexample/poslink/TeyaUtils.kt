@@ -70,7 +70,7 @@ object TeyaUtils {
     }
 
     fun makePayment(amount: Int, tip: Int?) {
-        val paymentSubscription = teyaPosLinkSDK.transactionsApi?.makePayment(
+        val paymentSubscription = teyaPosLinkSDK.transactionsApi.makePayment(
             transactionId = UUID.randomUUID()
                 .toString(), // or pass whatever identifier you already have for the payment you're about to make
             amount = amount, // the total amount to be paid including the tip, in the smallest unit of the currency (e.g., cents).
@@ -78,7 +78,7 @@ object TeyaUtils {
             tip = tip // An optional tip amount, in the smallest unit of the currency.
         )
 
-        paymentSubscription?.subscribe(
+        paymentSubscription.subscribe(
             object : PaymentStateSubscription.PaymentStateChangeListener {
                 override fun onPaymentStateChanged(state: PaymentStateSubscription.PaymentStateDetails) {
                     Log.d("SDK", "new state = $state, is it a final state = ${state.isFinal}")
@@ -86,7 +86,7 @@ object TeyaUtils {
             }
         )
 
-        paymentSubscription?.subscribe(
+        paymentSubscription.subscribe(
             TeyaPosLinkPaymentInProgressUi(
                 autoDismissOnFinalStateAfterMs = 2000, // Configurable. Time in ms before the UI auto-dismisses after a final payment state.
                 onDismiss = { // Optional callback invoked after dismissing the UI with the current PaymentStateDetails.
@@ -97,9 +97,9 @@ object TeyaUtils {
     }
 
     fun printReceipt(products: List<Product>, tip: Double) {
-        teyaPosLinkSDK.printingApi?.printCustomTemplate(
+        teyaPosLinkSDK.printingApi.printCustomTemplate(
             buildCustomPrintTemplate(products, tip)
-        )?.subscribe(
+        ).subscribe(
             object : PrintingStatusSubscription.Listener {
                 override fun onPrintingStateChanged(printStateDetails: PrintStateDetails) {
                     Log.d("SDK", "Printing state changed: $printStateDetails")
