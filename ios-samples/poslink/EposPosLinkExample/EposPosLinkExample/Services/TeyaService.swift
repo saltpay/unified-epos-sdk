@@ -51,7 +51,7 @@ final class TeyaService {
     }
     
     func makePayment(totalMinorUnits: Int32, tipMinorUnits: Int32) {
-        let paymentSubscription = teyaPosLinkSDK.transactionsApi?.makePayment(
+        let paymentSubscription = teyaPosLinkSDK.transactionsApi.makePayment(
             transactionId: UUID().uuidString, // or pass whatever identifier you already have for the payment you're about to make
             amount: totalMinorUnits, // the total amount to be paid including the tip, in the smallest unit of the currency (e.g., cents).
             currency: PriceUtils.currencyCode, // The ISO 4217 currency code (e.g., "GBP", "EUR").
@@ -59,8 +59,8 @@ final class TeyaService {
             purchaseData: nil
         )
         
-        paymentSubscription?.subscribe(listener: PaymentStateChangeListener())
-        paymentSubscription?.subscribe(
+        paymentSubscription.subscribe(listener: PaymentStateChangeListener())
+        paymentSubscription.subscribe(
             listener: TeyaPosLinkInProgressUiKt.create(
                 autoDismissOnFinalStateAfterMs: 2000, // Time in ms before the UI auto-dismisses after a final state
                 onDismiss: { state in // Optional callback invoked after dismissing the UI with the current PaymentStateDetails.
@@ -72,7 +72,7 @@ final class TeyaService {
     
     func printReceipt(products: [Product], tip: Double) {
         let template = buildCustomPrintTemplate(products: products, tip: tip)
-        teyaPosLinkSDK.printingApi?.printCustomTemplate(template: template).subscribe(
+        teyaPosLinkSDK.printingApi.printCustomTemplate(template: template).subscribe(
             printingListener: PrintingStatusSubscriptionListener()
         )
     }

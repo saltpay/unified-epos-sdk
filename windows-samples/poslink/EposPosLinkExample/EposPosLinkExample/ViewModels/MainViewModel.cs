@@ -79,7 +79,8 @@ public partial class MainViewModel : ObservableObject
         _teyaSdkManager.StartProcess();
 
         SdkStatusMessage = "Initializing SDK...";
-        await _teyaSdkManager.Initialize();
+        var initResponse = await _teyaSdkManager.Initialize();
+        Debug.WriteLine($"{initResponse}");
 
         SdkStatusMessage = "Setting up SDK...";
         var setupResponse = await _teyaSdkManager.Setup();
