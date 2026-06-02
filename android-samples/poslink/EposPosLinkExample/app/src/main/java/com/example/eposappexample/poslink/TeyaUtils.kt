@@ -14,7 +14,13 @@ import com.teya.unifiedepossdk.models.TableHeaderCell
 import com.teya.unifiedepossdk.models.TableRow
 import com.teya.unifiedepossdk.models.Template
 import com.teya.unifiedepossdk.poslink.PosLinkSDK
+import com.teya.unifiedepossdk.poslink.PosLinkTabsApi
+import com.teya.unifiedepossdk.poslink.TabEventListener
 import com.teya.unifiedepossdk.poslink.TeyaPosLinkPaymentInProgressUi
+import com.teya.unifiedepossdk.poslink.models.tabs.Tab
+import com.teya.unifiedepossdk.poslink.models.tabs.TabId
+import com.teya.unifiedepossdk.poslink.models.tabs.TabPage
+import com.teya.unifiedepossdk.poslink.models.tabs.TabPaymentContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -68,6 +74,144 @@ object TeyaUtils {
     fun clearDeviceLink() {
         teyaPosLinkSDK.clearDeviceLink()
     }
+
+    // ---- Pay at Table (Tabs) ----
+
+    /** Enables or disables Pay at Table for the linked store. */
+    fun setPayAtTableEnabled(
+        enable: Boolean,
+        onSuccess: () -> Unit,
+        onFailure: (PosLinkTabsApi.TabOperationFailure) -> Unit
+    ) {
+        teyaPosLinkSDK.tabsApi.setPayAtTableEnabledOnStore(enable, onSuccess, onFailure)
+    }
+
+    /** Opens (registers) a tab/table with POSLink. */
+    fun openTab(
+        tabId: String,
+        tabName: String,
+        onSuccess: (Tab) -> Unit,
+        onFailure: (PosLinkTabsApi.TabOperationFailure) -> Unit
+    ) {
+        teyaPosLinkSDK.tabsApi.openTab(
+            tabId = TabId(tabId),
+            tabName = tabName,
+            currency = CURRENCY_CODE,
+            onSuccess = onSuccess,
+            onFailure = onFailure
+        )
+    }
+
+    /** Lists the currently active tabs for the linked store (first page). */
+    fun listTabs(
+        onSuccess: (TabPage) -> Unit,
+        onFailure: (PosLinkTabsApi.TabOperationFailure) -> Unit
+    ) {
+        teyaPosLinkSDK.tabsApi.listTabs(onSuccess = onSuccess, onFailure = onFailure)
+    }
+
+    /** Closes a tab, removing it from the active list. */
+    fun closeTab(
+        tabId: TabId,
+        onSuccess: () -> Unit,
+        onFailure: (PosLinkTabsApi.TabOperationFailure) -> Unit
+    ) {
+        teyaPosLinkSDK.tabsApi.closeTab(tabId, onSuccess, onFailure)
+    }
+
+    /** Subscribes a listener to the terminal-initiated tab event stream. */
+    fun subscribeToTabEvents(listener: TabEventListener) {
+        teyaPosLinkSDK.tabsApi.tabEvents.subscribe(listener)
+    }
+
+    /** Unsubscribes a previously-subscribed tab event listener. */
+    fun unsubscribeFromTabEvents(listener: TabEventListener) {
+        teyaPosLinkSDK.tabsApi.tabEvents.unsubscribe(listener)
+    }
+
+    /** Responds to a SHOW_BILL_REQUEST by sending the bill back to the requesting terminal. */
+    fun respondToBillRequest(
+        tabId: TabId,
+        terminalId: String,
+        totalAmountMinor: Int,
+        billItems: List<Product>,
+        onSuccess: () -> Unit,
+        onFailure: (PosLinkTabsApi.ShowBillFailure) -> Unit
+    ) {
+        teyaPosLinkSDK.tabsApi.respondToBillRequest(
+            tabId = tabId,
+            terminalId = terminalId,
+            totalAmount = totalAmountMinor,
+            currency = CURRENCY_CODE,
+            printModel = buildBillTemplate(tabId, billItems, totalAmountMinor),
+            onSuccess = onSuccess,
+            onFailure = onFailure
+        )
+    }
+
+    /** Responds to a PAY_REQUEST by starting a tab-tagged payment and logging its state. */
+    fun makeTabPayment(tabContext: TabPaymentContext, amount: Int, currency: String) {
+        val subscription = teyaPosLinkSDK.transactionsApi.makePayment(
+            transactionId = UUID.randomUUID().toString(),
+            amount = amount,
+            currency = currency,
+            tip = null,
+            tabContext = tabContext
+        )
+        subscription.subscribe(
+            object : PaymentStateSubscription.PaymentStateChangeListener {
+                override fun onPaymentStateChanged(state: PaymentStateSubscription.PaymentStateDetails) {
+                    Log.d("SDK", "Tab payment state = $state, final = ${state.isFinal}")
+                }
+            }
+        )
+    }
+
+    private fun buildBillTemplate(tabId: TabId, items: List<Product>, totalMinor: Int) = Template(
+        listOf(
+            ReceiptRow.Item(
+                RowElement.Text(text = "BILL", align = Align.Center, bold = true)
+            ),
+            ReceiptRow.Item(
+                RowElement.Text(text = "Tab: ${tabId.value}", align = Align.Center)
+            ),
+            ReceiptRow.Spacer,
+            ReceiptRow.Divider,
+            ReceiptRow.Table(
+                headerCells = listOf(
+                    TableHeaderCell(
+                        element = RowElement.Text(text = "ITEM", bold = true, align = Align.Left),
+                        1f
+                    ),
+                    TableHeaderCell(
+                        element = RowElement.Text(text = "PRICE", bold = true, align = Align.Right),
+                        1f
+                    ),
+                ),
+                rows = items.map { product ->
+                    TableRow(
+                        cells = listOf(
+                            RowElement.Text(
+                                text = "${product.quantity}x ${product.name.uppercase()}",
+                                align = Align.Left
+                            ),
+                            RowElement.Text(
+                                text = formatPrice(product.price * product.quantity),
+                                align = Align.Right
+                            ),
+                        )
+                    )
+                }
+            ),
+            ReceiptRow.Divider,
+            ReceiptRow.Items(
+                items = listOf(
+                    RowElement.Text(text = "TOTAL", align = Align.Left, bold = true),
+                    RowElement.Text(text = formatMinor(totalMinor), align = Align.Right, bold = true),
+                )
+            ),
+        )
+    )
 
     fun makePayment(amount: Int, tip: Int?) {
         val paymentSubscription = teyaPosLinkSDK.transactionsApi.makePayment(
