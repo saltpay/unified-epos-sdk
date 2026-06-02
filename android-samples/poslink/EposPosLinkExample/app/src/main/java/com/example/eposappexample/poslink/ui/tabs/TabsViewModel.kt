@@ -54,8 +54,14 @@ class TabsViewModel : ViewModel() {
     val canOpenTab: Boolean get() = basket.isNotEmpty() && tabNameInput.isNotBlank()
 
     // Remember the basket used to open each tab so we can render its bill on request.
+    // Note: this is only populated for tabs opened in this app session. Tabs surfaced by
+    // refreshTabs() that were opened elsewhere have no basket here, so their bill responds empty.
+    // A real ePOS would look the order up from its own store instead.
     private val basketByTab = mutableMapOf<String, List<Product>>()
 
+    // The SDK delivers these tab-event callbacks on the main thread, so it is safe to mutate
+    // Compose state and basketByTab directly here. If you observe events off-main in your own
+    // integration, post state changes back to the main thread first.
     private val listener = object : TabEventListener {
         override fun onShowBillRequested(request: TabBillRequest) {
             log("onShowBillRequested(tab=${request.tabId.value}, terminal=${request.terminalId})")
@@ -101,6 +107,10 @@ class TabsViewModel : ViewModel() {
         override fun onConnectionStateChange(state: ConnectionState) {
             connectionState = state
             log("onConnectionStateChange($state)")
+        }
+
+        override fun onUnsubscribed() {
+            log("onUnsubscribed")
         }
     }
 

@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.example.eposappexample.poslink.TeyaUtils
 import com.example.eposappexample.poslink.models.Product
+import com.example.eposappexample.poslink.toMinorUnits
 
 class OrderViewModel : ViewModel() {
 
@@ -49,9 +50,7 @@ class OrderViewModel : ViewModel() {
     }
 
     fun pay() {
-        val totalInMinorUnits = (total * 100).toInt()
-        val tipInMinorUnits = (tipAmount * 100).toInt()
-        TeyaUtils.makePayment(totalInMinorUnits, tipInMinorUnits)
+        TeyaUtils.makePayment(toMinorUnits(total), toMinorUnits(tipAmount))
     }
 
     fun printReceipt() {
