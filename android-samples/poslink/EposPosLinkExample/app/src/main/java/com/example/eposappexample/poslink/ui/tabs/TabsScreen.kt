@@ -326,6 +326,8 @@ private fun TableDetailsScreen(
         ) {
             CurrentItems(
                 items = items,
+                onAddProduct = onAddProduct,
+                onRemoveProduct = onRemoveProduct,
                 modifier = Modifier
                     .weight(1f)
                     .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -345,7 +347,7 @@ private fun TableDetailsScreen(
                     ),
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
                     modifier = Modifier
-                        .padding(horizontal = 16.dp)
+                        .padding(end = 16.dp)
                         .height(56.dp)
                 ) {
                     Icon(Icons.Default.Close, contentDescription = null)
@@ -355,7 +357,7 @@ private fun TableDetailsScreen(
                 Button(
                     onClick = onShowCatalogue,
                     modifier = Modifier
-                        .padding(horizontal = 16.dp)
+                        .padding(end = 16.dp)
                         .height(56.dp)
                 ) {
                     Icon(Icons.Default.Add, contentDescription = null)
@@ -373,7 +375,11 @@ private fun TableDetailsScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text("Total", style = MaterialTheme.typography.titleMedium)
-                Text(formatMinor(totalMinor), style = MaterialTheme.typography.titleMedium)
+                Text(
+                    formatMinor(totalMinor),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
             }
         }
 
@@ -432,7 +438,12 @@ private fun ProductCatalogueDialog(
 }
 
 @Composable
-private fun CurrentItems(items: List<Product>, modifier: Modifier = Modifier) {
+private fun CurrentItems(
+    items: List<Product>,
+    onAddProduct: (Product) -> Unit,
+    onRemoveProduct: (Product) -> Unit,
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -451,15 +462,38 @@ private fun CurrentItems(items: List<Product>, modifier: Modifier = Modifier) {
         items.forEach { product ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    "${product.quantity}x ${product.name}",
-                    style = MaterialTheme.typography.bodyMedium
+                    "${product.emoji} ${product.name}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f)
                 )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = { onRemoveProduct(product) }) {
+                        Text(
+                            "−",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Text(
+                        "${product.quantity}",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    IconButton(onClick = { onAddProduct(product) }) {
+                        Text(
+                            "+",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
                 Text(
                     formatPrice(product.price * product.quantity),
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(start = 8.dp)
                 )
             }
         }
