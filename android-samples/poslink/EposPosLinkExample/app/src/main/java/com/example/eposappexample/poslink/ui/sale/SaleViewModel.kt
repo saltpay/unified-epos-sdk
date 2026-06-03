@@ -1,4 +1,4 @@
-package com.example.eposappexample.poslink.ui.order
+package com.example.eposappexample.poslink.ui.sale
 
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -9,7 +9,7 @@ import com.example.eposappexample.poslink.TeyaUtils
 import com.example.eposappexample.poslink.models.Product
 import com.example.eposappexample.poslink.toMinorUnits
 
-class OrderViewModel : ViewModel() {
+class SaleViewModel : ViewModel() {
 
     var basket by mutableStateOf(listOf<Product>())
         private set

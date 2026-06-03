@@ -31,6 +31,24 @@ object TabsLogic {
 
     fun removeTab(current: List<TabSummary>, tabId: TabId): List<TabSummary> =
         current.filterNot { it.tabId == tabId }
+
+    fun addProduct(items: List<Product>, product: Product): List<Product> {
+        val existing = items.find { it.id == product.id }
+        return if (existing != null) {
+            items.map { if (it.id == product.id) it.copy(quantity = it.quantity + 1) else it }
+        } else {
+            items + product.copy(quantity = 1)
+        }
+    }
+
+    fun removeProduct(items: List<Product>, product: Product): List<Product> {
+        val existing = items.find { it.id == product.id } ?: return items
+        return if (existing.quantity > 1) {
+            items.map { if (it.id == product.id) it.copy(quantity = it.quantity - 1) else it }
+        } else {
+            items.filter { it.id != product.id }
+        }
+    }
 }
 
 class TabsViewModel : ViewModel() {
@@ -38,39 +56,44 @@ class TabsViewModel : ViewModel() {
     // ---- UI state ----
     var patEnabled by mutableStateOf(false)
         private set
-    var connectionState by mutableStateOf(ConnectionState.Disconnected)
-        private set
-    var basket by mutableStateOf(listOf<Product>())
-        private set
     var tabNameInput by mutableStateOf("")
         private set
     var openTabs by mutableStateOf(listOf<TabSummary>())
         private set
     var eventLog by mutableStateOf(listOf<String>())
         private set
+    var showAddTableDialog by mutableStateOf(false)
+        private set
+    var showProductCatalogue by mutableStateOf(false)
+        private set
 
-    val basketItemCount: Int get() = basket.sumOf { it.quantity }
-    val basketTotalMinor: Int get() = basket.sumOf { toMinorUnits(it.price * it.quantity) }
-    val canOpenTab: Boolean get() = basket.isNotEmpty() && tabNameInput.isNotBlank()
+    var selectedTabId by mutableStateOf<TabId?>(null)
+        private set
 
-    // Remember the basket used to open each tab so we can render its bill on request.
-    // Note: this is only populated for tabs opened in this app session. Tabs surfaced by
-    // refreshTabs() that were opened elsewhere have no basket here, so their bill responds empty.
-    // A real ePOS would look the order up from its own store instead.
-    private val basketByTab = mutableMapOf<String, List<Product>>()
+    var itemsByTab by mutableStateOf<Map<String, List<Product>>>(emptyMap())
+        private set
 
-    // The SDK delivers these tab-event callbacks on the main thread, so it is safe to mutate
-    // Compose state and basketByTab directly here. If you observe events off-main in your own
-    // integration, post state changes back to the main thread first.
+    val canOpenTab: Boolean get() = tabNameInput.isNotBlank()
+
+    val selectedTabItems: List<Product>
+        get() = selectedTabId?.let { itemsByTab[it.value] } ?: emptyList()
+
+    val selectedTab: TabSummary?
+        get() = selectedTabId?.let { id -> openTabs.find { it.tabId == id } }
+
+    fun tabTotalMinor(tabId: TabId): Int = totalMinor(itemsByTab[tabId.value] ?: emptyList())
+
+    private fun totalMinor(items: List<Product>): Int =
+        items.sumOf { toMinorUnits(it.price * it.quantity) }
+
     private val listener = object : TabEventListener {
         override fun onShowBillRequested(request: TabBillRequest) {
             log("onShowBillRequested(tab=${request.tabId.value}, terminal=${request.terminalId})")
-            val items = basketByTab[request.tabId.value] ?: emptyList()
-            val total = items.sumOf { toMinorUnits(it.price * it.quantity) }
+            val items = itemsByTab[request.tabId.value] ?: emptyList()
             TeyaUtils.respondToBillRequest(
                 tabId = request.tabId,
                 terminalId = request.terminalId,
-                totalAmountMinor = total,
+                totalAmountMinor = totalMinor(items),
                 billItems = items,
                 onSuccess = { log("respondToBillRequest success") },
                 onFailure = { failure -> log("respondToBillRequest failure: $failure") }
@@ -105,7 +128,6 @@ class TabsViewModel : ViewModel() {
         override fun onBillHidden(tabId: TabId) { log("onBillHidden(tab=${tabId.value})") }
 
         override fun onConnectionStateChange(state: ConnectionState) {
-            connectionState = state
             log("onConnectionStateChange($state)")
         }
 
@@ -136,37 +158,51 @@ class TabsViewModel : ViewModel() {
     }
 
     fun addProduct(product: Product) {
-        val existing = basket.find { it.id == product.id }
-        basket = if (existing != null) {
-            basket.map { if (it.id == product.id) it.copy(quantity = it.quantity + 1) else it }
-        } else {
-            basket + product.copy(quantity = 1)
-        }
+        val tabKey = selectedTabId?.value ?: return
+        val updated = TabsLogic.addProduct(itemsByTab[tabKey] ?: emptyList(), product)
+        itemsByTab = itemsByTab + (tabKey to updated)
     }
 
     fun removeProduct(product: Product) {
-        val existing = basket.find { it.id == product.id } ?: return
-        basket = if (existing.quantity > 1) {
-            basket.map { if (it.id == product.id) it.copy(quantity = it.quantity - 1) else it }
-        } else {
-            basket.filter { it.id != product.id }
-        }
+        val tabKey = selectedTabId?.value ?: return
+        val updated = TabsLogic.removeProduct(itemsByTab[tabKey] ?: emptyList(), product)
+        itemsByTab = itemsByTab + (tabKey to updated)
     }
 
     fun updateTabName(value: String) { tabNameInput = value }
 
+    fun showAddTableDialog() {
+        tabNameInput = ""
+        showAddTableDialog = true
+    }
+
+    fun dismissAddTableDialog() {
+        showAddTableDialog = false
+        tabNameInput = ""
+    }
+
+    fun openTableDetails(tabId: TabId) { selectedTabId = tabId }
+
+    fun closeTableDetails() {
+        selectedTabId = null
+        showProductCatalogue = false
+    }
+
+    fun showProductCatalogue() { showProductCatalogue = true }
+
+    fun dismissProductCatalogue() { showProductCatalogue = false }
+
     fun openTab() {
         if (!canOpenTab) return
         val tabId = "tab-${System.currentTimeMillis()}"
-        val itemsForTab = basket
         TeyaUtils.openTab(
             tabId = tabId,
             tabName = tabNameInput,
             onSuccess = { tab ->
-                basketByTab[tab.tabId.value] = itemsForTab
+                itemsByTab = itemsByTab + (tab.tabId.value to emptyList())
                 openTabs = TabsLogic.upsertTab(openTabs, tab.toSummary())
-                basket = emptyList()
                 tabNameInput = ""
+                showAddTableDialog = false
                 log("openTab(${tab.tabId.value}, '${tab.tabName}') success")
             },
             onFailure = { failure -> log("openTab failure: $failure") }
@@ -188,7 +224,8 @@ class TabsViewModel : ViewModel() {
             tabId = tabId,
             onSuccess = {
                 openTabs = TabsLogic.removeTab(openTabs, tabId)
-                basketByTab.remove(tabId.value)
+                itemsByTab = itemsByTab - tabId.value
+                if (selectedTabId == tabId) selectedTabId = null
                 log("closeTab(${tabId.value}) success")
             },
             onFailure = { failure -> log("closeTab failure: $failure") }

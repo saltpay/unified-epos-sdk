@@ -15,21 +15,26 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.eposappexample.poslink.R
 import com.example.eposappexample.poslink.TeyaUtils
-import com.example.eposappexample.poslink.ui.order.OrderScreen
+import com.example.eposappexample.poslink.ui.sale.SaleScreen
 import com.example.eposappexample.poslink.ui.tabs.TabsScreen
 import com.example.eposappexample.poslink.ui.theme.EposAppExampleTheme
 
-private enum class Destination(val route: String, val label: String, val icon: ImageVector) {
-    Order("order", "Order", Icons.Filled.ShoppingCart),
-    Tabs("tabs", "Pay at Table", Icons.AutoMirrored.Filled.List)
+private enum class Destination(
+    val route: String,
+    val label: String,
+    val icon: @Composable () -> Unit
+) {
+    Sale("sale", "Sale", { Icon(Icons.Filled.ShoppingCart, contentDescription = null) }),
+    Tabs("tabs", "Pay at Table", { Icon(painterResource(R.drawable.ic_fork_knife), contentDescription = null) })
 }
 
 class MainActivity : ComponentActivity() {
@@ -63,7 +68,7 @@ private fun AppRoot() {
                                 restoreState = true
                             }
                         },
-                        icon = { Icon(dest.icon, contentDescription = dest.label) },
+                        icon = dest.icon,
                         label = { Text(dest.label) }
                     )
                 }
@@ -72,10 +77,10 @@ private fun AppRoot() {
     ) { padding ->
         NavHost(
             navController = navController,
-            startDestination = Destination.Order.route,
+            startDestination = Destination.Sale.route,
             modifier = Modifier.padding(padding)
         ) {
-            composable(Destination.Order.route) { OrderScreen() }
+            composable(Destination.Sale.route) { SaleScreen() }
             composable(Destination.Tabs.route) { TabsScreen() }
         }
     }

@@ -1,4 +1,4 @@
-package com.example.eposappexample.poslink.ui.order
+package com.example.eposappexample.poslink.ui.sale
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -39,20 +39,20 @@ import com.example.eposappexample.poslink.models.Product
 import com.example.eposappexample.poslink.ui.components.ProductGrid
 
 @Composable
-fun OrderScreen(
+fun SaleScreen(
     modifier: Modifier = Modifier,
-    viewModel: OrderViewModel = viewModel()
+    viewModel: SaleViewModel = viewModel()
 ) {
     Scaffold(
         modifier = modifier,
         topBar = {
-            OrderTopBar(
+            SaleTopBar(
                 onClearUserAuth = { viewModel.clearUserAuth() },
                 onClearDeviceLink = { viewModel.clearDeviceLink() }
             )
         },
         bottomBar = {
-            OrderBottomBar(
+            SaleBottomBar(
                 itemCount = viewModel.itemCount,
                 subtotal = viewModel.subtotal,
                 total = viewModel.total,
@@ -76,7 +76,7 @@ fun OrderScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun OrderTopBar(
+private fun SaleTopBar(
     onClearUserAuth: () -> Unit,
     onClearDeviceLink: () -> Unit
 ) {
@@ -112,7 +112,7 @@ private fun OrderTopBar(
 }
 
 @Composable
-private fun OrderBottomBar(
+private fun SaleBottomBar(
     itemCount: Int,
     subtotal: Double,
     total: Double,

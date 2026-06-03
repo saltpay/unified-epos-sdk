@@ -70,6 +70,11 @@ fun ProductCard(
                 .padding(12.dp)
         ) {
             Text(
+                product.emoji,
+                style = MaterialTheme.typography.headlineMedium
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
                 product.name,
                 style = MaterialTheme.typography.titleMedium
             )
@@ -80,12 +85,14 @@ fun ProductCard(
             )
             Spacer(modifier = Modifier.height(4.dp))
 
-            if (count > 0) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp)
+            ) {
+                if (count > 0) {
                     Text(
                         "x$count",
                         style = MaterialTheme.typography.labelLarge,
