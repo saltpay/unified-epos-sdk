@@ -1,9 +1,11 @@
 package com.example.eposappexample.poslink.ui.tabs
 
+import android.app.Application
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import com.example.eposappexample.poslink.TeyaUtils
 import com.example.eposappexample.poslink.models.Product
 import com.example.eposappexample.poslink.toMinorUnits
@@ -51,10 +53,12 @@ object TabsLogic {
     }
 }
 
-class TabsViewModel : ViewModel() {
+class TabsViewModel(application: Application) : AndroidViewModel(application) {
+
+    private val prefs = application.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     // ---- UI state ----
-    var patEnabled by mutableStateOf(false)
+    var patEnabled by mutableStateOf(prefs.getBoolean(KEY_PAT_ENABLED, false))
         private set
     var tabNameInput by mutableStateOf("")
         private set
@@ -151,6 +155,7 @@ class TabsViewModel : ViewModel() {
             enable = enable,
             onSuccess = {
                 patEnabled = enable
+                prefs.edit().putBoolean(KEY_PAT_ENABLED, enable).apply()
                 log("setPayAtTableEnabled($enable) success")
             },
             onFailure = { failure -> log("setPayAtTableEnabled failure: $failure") }
@@ -234,6 +239,11 @@ class TabsViewModel : ViewModel() {
 
     private fun log(message: String) {
         eventLog = TabsLogic.prependLog(eventLog, message)
+    }
+
+    private companion object {
+        const val PREFS_NAME = "pat_prefs"
+        const val KEY_PAT_ENABLED = "pat_enabled"
     }
 }
 
