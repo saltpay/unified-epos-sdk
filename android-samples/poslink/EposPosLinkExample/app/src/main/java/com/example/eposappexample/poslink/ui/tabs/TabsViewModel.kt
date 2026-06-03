@@ -94,8 +94,13 @@ class TabsViewModel(application: Application) : AndroidViewModel(application) {
         override fun onShowBillRequested(request: TabBillRequest) {
             log("onShowBillRequested(tab=${request.tabId.value}, terminal=${request.terminalId})")
             val items = itemsByTab[request.tabId.value] ?: emptyList()
+            val tab = openTabs.find { it.tabId.value == request.tabId.value } ?: run {
+                log("Tab not found for bill request: ${request.tabId.value}")
+                return
+            }
+
             TeyaUtils.respondToBillRequest(
-                tabId = request.tabId,
+                tab = tab,
                 terminalId = request.terminalId,
                 totalAmountMinor = totalMinor(items),
                 billItems = items,

@@ -21,6 +21,7 @@ import com.teya.unifiedepossdk.poslink.models.tabs.Tab
 import com.teya.unifiedepossdk.poslink.models.tabs.TabId
 import com.teya.unifiedepossdk.poslink.models.tabs.TabPage
 import com.teya.unifiedepossdk.poslink.models.tabs.TabPaymentContext
+import com.teya.unifiedepossdk.poslink.models.tabs.TabSummary
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -131,7 +132,7 @@ object TeyaUtils {
 
     /** Responds to a SHOW_BILL_REQUEST by sending the bill back to the requesting terminal. */
     fun respondToBillRequest(
-        tabId: TabId,
+        tab: TabSummary,
         terminalId: String,
         totalAmountMinor: Int,
         billItems: List<Product>,
@@ -139,11 +140,11 @@ object TeyaUtils {
         onFailure: (PosLinkTabsApi.ShowBillFailure) -> Unit
     ) {
         teyaPosLinkSDK.tabsApi.respondToBillRequest(
-            tabId = tabId,
+            tabId = tab.tabId,
             terminalId = terminalId,
             totalAmount = totalAmountMinor,
             currency = CURRENCY_CODE,
-            printModel = buildBillTemplate(tabId, billItems, totalAmountMinor),
+            printModel = buildBillTemplate(tab, billItems, totalAmountMinor),
             onSuccess = onSuccess,
             onFailure = onFailure
         )
@@ -167,13 +168,13 @@ object TeyaUtils {
         )
     }
 
-    private fun buildBillTemplate(tabId: TabId, items: List<Product>, totalMinor: Int) = Template(
+    private fun buildBillTemplate(tab: TabSummary, items: List<Product>, totalMinor: Int) = Template(
         listOf(
             ReceiptRow.Item(
                 RowElement.Text(text = "BILL", align = Align.Center, bold = true)
             ),
             ReceiptRow.Item(
-                RowElement.Text(text = "Tab: ${tabId.value}", align = Align.Center)
+                RowElement.Text(text = tab.tabName, align = Align.Center)
             ),
             ReceiptRow.Spacer,
             ReceiptRow.Divider,
