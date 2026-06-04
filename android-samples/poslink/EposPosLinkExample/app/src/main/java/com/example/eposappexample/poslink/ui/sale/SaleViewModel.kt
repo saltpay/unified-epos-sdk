@@ -5,7 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.example.eposappexample.poslink.TeyaUtils
+import com.example.eposappexample.poslink.teya.TeyaUtils
 import com.example.eposappexample.poslink.models.Product
 import com.example.eposappexample.poslink.toMinorUnits
 
