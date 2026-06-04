@@ -86,7 +86,12 @@ private fun SaleTopBar(
     var showMenu by remember { mutableStateOf(false) }
 
     TopAppBar(
-        title = { LemonadeUi.Text("ePOS Sample Poslink", textStyle = LemonadeTheme.typography.headingXSmall) },
+        title = {
+            LemonadeUi.Text(
+                "ePOS Sample Poslink",
+                textStyle = LemonadeTheme.typography.headingXSmall
+            )
+        },
         actions = {
             IconButton(onClick = { showMenu = true }) {
                 Icon(Icons.Default.MoreVert, contentDescription = "Menu")
@@ -155,7 +160,7 @@ private fun SaleBottomBar(
                         onTipInputChange(newValue)
                     }
                 },
-                label = "Tip ($currencySymbol)",
+                placeholderText = "Tip (${currencySymbol})",
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth()
             )

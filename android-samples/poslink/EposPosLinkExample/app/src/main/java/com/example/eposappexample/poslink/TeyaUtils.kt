@@ -87,7 +87,6 @@ object TeyaUtils {
         teyaPosLinkSDK.tabsApi.setPayAtTableEnabledOnStore(enable, onSuccess, onFailure)
     }
 
-    /** Opens (registers) a tab/table with POSLink. */
     fun openTab(
         tabId: String,
         tabName: String,
@@ -103,7 +102,6 @@ object TeyaUtils {
         )
     }
 
-    /** Lists the currently active tabs for the linked store (first page). */
     fun listTabs(
         onSuccess: (TabPage) -> Unit,
         onFailure: (PosLinkTabsApi.TabOperationFailure) -> Unit
@@ -111,7 +109,14 @@ object TeyaUtils {
         teyaPosLinkSDK.tabsApi.listTabs(onSuccess = onSuccess, onFailure = onFailure)
     }
 
-    /** Closes a tab, removing it from the active list. */
+    fun getTab(
+        tabId: TabId,
+        onSuccess: (Tab) -> Unit,
+        onFailure: (PosLinkTabsApi.TabOperationFailure) -> Unit
+    ) {
+        teyaPosLinkSDK.tabsApi.getTab(tabId, onSuccess, onFailure)
+    }
+
     fun closeTab(
         tabId: TabId,
         onSuccess: () -> Unit,
@@ -120,12 +125,10 @@ object TeyaUtils {
         teyaPosLinkSDK.tabsApi.closeTab(tabId, onSuccess, onFailure)
     }
 
-    /** Subscribes a listener to the terminal-initiated tab event stream. */
     fun subscribeToTabEvents(listener: TabEventListener) {
         teyaPosLinkSDK.tabsApi.tabEvents.subscribe(listener)
     }
 
-    /** Unsubscribes a previously-subscribed tab event listener. */
     fun unsubscribeFromTabEvents(listener: TabEventListener) {
         teyaPosLinkSDK.tabsApi.tabEvents.unsubscribe(listener)
     }

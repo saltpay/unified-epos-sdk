@@ -54,9 +54,15 @@ import com.teya.lemonade.core.LemonadeButtonVariant
 import com.teya.lemonade.core.LemonadeCardBackground
 import com.teya.lemonade.core.LemonadeCardPadding
 import com.teya.lemonade.core.TagVoice
+import com.teya.unifiedepossdk.PaymentStateSubscription
+import com.teya.unifiedepossdk.poslink.models.tabs.PaymentRequestSummary
+import com.teya.unifiedepossdk.poslink.models.tabs.Tab
 import com.teya.unifiedepossdk.poslink.models.tabs.TabId
 import com.teya.unifiedepossdk.poslink.models.tabs.TabStatus
 import com.teya.unifiedepossdk.poslink.models.tabs.TabSummary
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun TabsScreen(
@@ -68,14 +74,20 @@ fun TabsScreen(
         TableDetailsScreen(
             modifier = modifier,
             tabName = selectedTab.tabName,
+            status = selectedTab.status,
+            tabDetail = viewModel.selectedTabDetail,
             items = viewModel.selectedTabItems,
             totalMinor = viewModel.tabTotalMinor(selectedTab.tabId),
             showProductCatalogue = viewModel.showProductCatalogue,
+            showPaymentsDialog = viewModel.showPaymentsDialog,
             onAddProduct = { viewModel.addProduct(it) },
             onRemoveProduct = { viewModel.removeProduct(it) },
             onShowCatalogue = { viewModel.showProductCatalogue() },
             onDismissCatalogue = { viewModel.dismissProductCatalogue() },
+            onShowPayments = { viewModel.showPaymentsDialog() },
+            onDismissPayments = { viewModel.dismissPaymentsDialog() },
             onCloseTab = { viewModel.closeTab(selectedTab.tabId) },
+            onRefreshDetail = { viewModel.refreshSelectedTabDetail() },
             onBack = { viewModel.closeTableDetails() }
         )
     } else {
@@ -216,6 +228,150 @@ private fun StatusTag(status: TabStatus) {
 }
 
 @Composable
+private fun PaymentsSummary(tab: Tab, onViewPayments: () -> Unit, modifier: Modifier = Modifier) {
+    val payments = tab.paymentRequests.orEmpty()
+    val ongoing = payments.firstOrNull { !it.status.isFinal }
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        AmountRow(label = "Paid", amountMinor = tab.totalPaid ?: 0)
+        if (ongoing != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                LemonadeUi.Text(
+                    "Payment in progress: ${formatMinor(ongoing.amount)}",
+                    textStyle = LemonadeTheme.typography.bodyMediumRegular,
+                    color = LemonadeTheme.colors.content.contentInfo
+                )
+                PaymentStatusTag(state = ongoing.status)
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            LemonadeUi.Text(
+                if (payments.isEmpty()) "No payments yet" else "Payments (${payments.size})",
+                textStyle = LemonadeTheme.typography.bodyMediumRegular,
+                color = LemonadeTheme.colors.content.contentSecondary
+            )
+            if (payments.isNotEmpty()) {
+                LemonadeUi.Button(
+                    label = "View payments",
+                    onClick = onViewPayments,
+                    variant = LemonadeButtonVariant.Neutral,
+                    type = LemonadeButtonType.Ghost,
+                    size = LemonadeButtonSize.Small
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PaymentsDialog(tab: Tab, onDismiss: () -> Unit) {
+    val payments = tab.paymentRequests.orEmpty()
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(shape = MaterialTheme.shapes.large) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                LemonadeUi.Text("Payments", textStyle = LemonadeTheme.typography.headingSmall)
+                AmountRow(label = "Paid", amountMinor = tab.totalPaid ?: 0)
+                tab.remaining?.let { AmountRow(label = "Remaining", amountMinor = it) }
+                HorizontalDivider()
+                Column(
+                    modifier = Modifier
+                        .heightIn(max = 360.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    payments.forEach { payment -> PaymentRow(payment) }
+                }
+                LemonadeUi.Button(
+                    label = "Done",
+                    onClick = onDismiss,
+                    size = LemonadeButtonSize.Large,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AmountRow(label: String, amountMinor: Int) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        LemonadeUi.Text(label, textStyle = LemonadeTheme.typography.bodyMediumRegular)
+        LemonadeUi.Text(formatMinor(amountMinor), textStyle = LemonadeTheme.typography.bodyMediumRegular)
+    }
+}
+
+@Composable
+private fun PaymentRow(payment: PaymentRequestSummary) {
+    val descriptor = listOfNotNull(
+        payment.method?.name?.lowercase()?.replaceFirstChar { it.uppercase() },
+        payment.type.name.lowercase().replaceFirstChar { it.uppercase() }
+    ).joinToString(" · ")
+    val secondary = LemonadeTheme.colors.content.contentSecondary
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Top
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            LemonadeUi.Text(
+                formatMinor(payment.amount),
+                textStyle = LemonadeTheme.typography.bodyMediumSemiBold
+            )
+            if (descriptor.isNotEmpty()) {
+                LemonadeUi.Text(descriptor, textStyle = LemonadeTheme.typography.bodySmallRegular, color = secondary)
+            }
+            payment.tip?.takeIf { it > 0 }?.let {
+                LemonadeUi.Text("Tip: ${formatMinor(it)}", textStyle = LemonadeTheme.typography.bodySmallRegular, color = secondary)
+            }
+            payment.transactionTimestampEpochMillis?.let {
+                LemonadeUi.Text(formatTimestamp(it), textStyle = LemonadeTheme.typography.bodySmallRegular, color = secondary)
+            }
+        }
+        PaymentStatusTag(state = payment.status)
+    }
+}
+
+private fun formatTimestamp(epochMillis: Long): String =
+    SimpleDateFormat("dd/MM/yy · HH:mm", Locale.getDefault()).format(Date(epochMillis))
+
+@Composable
+private fun PaymentStatusTag(state: PaymentStateSubscription.PaymentState) {
+    val (voice, label) = when (state) {
+        PaymentStateSubscription.PaymentState.Successful -> TagVoice.Positive to "Paid"
+        PaymentStateSubscription.PaymentState.Canceled -> TagVoice.Neutral to "Canceled"
+        PaymentStateSubscription.PaymentState.ProcessingFailed -> TagVoice.Critical to "Failed"
+        PaymentStateSubscription.PaymentState.CommunicationFailed -> TagVoice.Critical to "Failed"
+        else -> TagVoice.Info to state.name
+    }
+    LemonadeUi.Tag(label = label, voice = voice)
+}
+
+@Composable
 private fun AddTableDialog(
     tabName: String,
     canOpenTab: Boolean,
@@ -266,14 +422,20 @@ private fun AddTableDialog(
 private fun TableDetailsScreen(
     modifier: Modifier,
     tabName: String,
+    status: TabStatus,
+    tabDetail: Tab?,
     items: List<Product>,
     totalMinor: Int,
     showProductCatalogue: Boolean,
+    showPaymentsDialog: Boolean,
     onAddProduct: (Product) -> Unit,
     onRemoveProduct: (Product) -> Unit,
     onShowCatalogue: () -> Unit,
     onDismissCatalogue: () -> Unit,
+    onShowPayments: () -> Unit,
+    onDismissPayments: () -> Unit,
     onCloseTab: () -> Unit,
+    onRefreshDetail: () -> Unit,
     onBack: () -> Unit
 ) {
     Scaffold(
@@ -287,6 +449,12 @@ private fun TableDetailsScreen(
                             Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back to tables"
                         )
+                    }
+                },
+                actions = {
+                    StatusTag(status = status)
+                    IconButton(onClick = onRefreshDetail) {
+                        Icon(Icons.Default.Refresh, contentDescription = "Refresh tab details")
                     }
                 }
             )
@@ -314,7 +482,7 @@ private fun TableDetailsScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 LemonadeUi.Button(
-                    label = "Close tab",
+                    label = "Close table",
                     onClick = onCloseTab,
                     variant = LemonadeButtonVariant.Critical,
                     type = LemonadeButtonType.Subtle,
@@ -330,6 +498,14 @@ private fun TableDetailsScreen(
             }
 
             HorizontalDivider()
+
+            if (tabDetail != null) {
+                PaymentsSummary(
+                    tab = tabDetail,
+                    onViewPayments = onShowPayments,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+            }
 
             Row(
                 modifier = Modifier
@@ -354,6 +530,10 @@ private fun TableDetailsScreen(
                 onRemove = onRemoveProduct,
                 onDismiss = onDismissCatalogue
             )
+        }
+
+        if (showPaymentsDialog && tabDetail != null) {
+            PaymentsDialog(tab = tabDetail, onDismiss = onDismissPayments)
         }
     }
 }

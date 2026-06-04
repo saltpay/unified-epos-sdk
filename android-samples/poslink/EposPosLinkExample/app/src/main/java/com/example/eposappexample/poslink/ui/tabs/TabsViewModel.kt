@@ -11,6 +11,7 @@ import com.example.eposappexample.poslink.models.Product
 import com.example.eposappexample.poslink.toMinorUnits
 import com.teya.unifiedepossdk.poslink.TabEventListener
 import com.teya.unifiedepossdk.poslink.models.tabs.ConnectionState
+import com.teya.unifiedepossdk.poslink.models.tabs.Tab
 import com.teya.unifiedepossdk.poslink.models.tabs.TabBillRequest
 import com.teya.unifiedepossdk.poslink.models.tabs.TabCompletion
 import com.teya.unifiedepossdk.poslink.models.tabs.TabId
@@ -70,8 +71,13 @@ class TabsViewModel(application: Application) : AndroidViewModel(application) {
         private set
     var showProductCatalogue by mutableStateOf(false)
         private set
+    var showPaymentsDialog by mutableStateOf(false)
+        private set
 
     var selectedTabId by mutableStateOf<TabId?>(null)
+        private set
+
+    var selectedTabDetail by mutableStateOf<Tab?>(null)
         private set
 
     var itemsByTab by mutableStateOf<Map<String, List<Product>>>(emptyMap())
@@ -115,19 +121,28 @@ class TabsViewModel(application: Application) : AndroidViewModel(application) {
                     "type=${request.tabContext.type}, amount=${request.amount} ${request.currency})"
             )
             TeyaUtils.makeTabPayment(request.tabContext, request.amount, request.currency)
+            refreshTab(request.tabContext.tabId)
         }
 
         override fun onPaymentProgress(detail: TabPaymentDetail) {
             log("onPaymentProgress(tab=${detail.tabId.value}, status=${detail.status})")
+            refreshTab(detail.tabId)
         }
 
         override fun onPaymentCompleted(detail: TabPaymentDetail) {
             log("onPaymentCompleted(tab=${detail.tabId.value}, status=${detail.status}, amount=${detail.amount})")
+            refreshTab(detail.tabId)
         }
 
-        override fun onTabPaused(tabId: TabId) { log("onTabPaused(tab=${tabId.value})") }
+        override fun onTabPaused(tabId: TabId) {
+            log("onTabPaused(tab=${tabId.value})")
+            refreshTab(tabId)
+        }
 
-        override fun onTabResumed(tabId: TabId) { log("onTabResumed(tab=${tabId.value})") }
+        override fun onTabResumed(tabId: TabId) {
+            log("onTabResumed(tab=${tabId.value})")
+            refreshTab(tabId)
+        }
 
         override fun onTabCompleted(completion: TabCompletion) {
             log("onTabCompleted(tab=${completion.tabId.value}, totalPaid=${completion.totalPaid})")
@@ -191,16 +206,42 @@ class TabsViewModel(application: Application) : AndroidViewModel(application) {
         tabNameInput = ""
     }
 
-    fun openTableDetails(tabId: TabId) { selectedTabId = tabId }
+    fun openTableDetails(tabId: TabId) {
+        selectedTabId = tabId
+        selectedTabDetail = null
+        refreshSelectedTabDetail()
+    }
 
     fun closeTableDetails() {
         selectedTabId = null
+        selectedTabDetail = null
         showProductCatalogue = false
+        showPaymentsDialog = false
+    }
+
+    fun refreshSelectedTabDetail() {
+        selectedTabId?.let { refreshTab(it) }
+    }
+
+    private fun refreshTab(tabId: TabId) {
+        TeyaUtils.getTab(
+            tabId = tabId,
+            onSuccess = { tab ->
+                openTabs = TabsLogic.upsertTab(openTabs, tab.toSummary())
+                if (tabId == selectedTabId) selectedTabDetail = tab
+                log("getTab(${tab.tabId.value}) -> status=${tab.status}, paid=${tab.totalPaid}, payments=${tab.paymentRequests?.size ?: 0}")
+            },
+            onFailure = { failure -> log("getTab failure: $failure") }
+        )
     }
 
     fun showProductCatalogue() { showProductCatalogue = true }
 
     fun dismissProductCatalogue() { showProductCatalogue = false }
+
+    fun showPaymentsDialog() { showPaymentsDialog = true }
+
+    fun dismissPaymentsDialog() { showPaymentsDialog = false }
 
     fun openTab() {
         if (!canOpenTab) return
@@ -252,7 +293,7 @@ class TabsViewModel(application: Application) : AndroidViewModel(application) {
     }
 }
 
-private fun com.teya.unifiedepossdk.poslink.models.tabs.Tab.toSummary() = TabSummary(
+private fun Tab.toSummary() = TabSummary(
     tabId = tabId,
     tabName = tabName,
     status = status,
