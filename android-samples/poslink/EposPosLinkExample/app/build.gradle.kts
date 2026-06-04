@@ -48,6 +48,7 @@ dependencies {
     // the locally-built artifact from Maven Local (see README "Pay at Table" section).
     implementation("com.teya.epos:unified-sdk-poslink:1.6.0-SNAPSHOT")
 
+    implementation(libs.lemonade.ui)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)

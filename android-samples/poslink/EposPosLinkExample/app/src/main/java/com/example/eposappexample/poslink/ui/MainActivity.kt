@@ -5,7 +5,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -34,7 +33,10 @@ private enum class Destination(
     val icon: @Composable () -> Unit
 ) {
     Sale("sale", "Sale", { Icon(Icons.Filled.ShoppingCart, contentDescription = null) }),
-    Tabs("tabs", "Pay at Table", { Icon(painterResource(R.drawable.ic_fork_knife), contentDescription = null) })
+    Tabs(
+        "tabs",
+        "Pay at Table",
+        { Icon(painterResource(R.drawable.ic_fork_knife), contentDescription = null) })
 }
 
 class MainActivity : ComponentActivity() {
@@ -63,7 +65,9 @@ private fun AppRoot() {
                         selected = currentDestination?.hierarchy?.any { it.route == dest.route } == true,
                         onClick = {
                             navController.navigate(dest.route) {
-                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
                                 launchSingleTop = true
                                 restoreState = true
                             }

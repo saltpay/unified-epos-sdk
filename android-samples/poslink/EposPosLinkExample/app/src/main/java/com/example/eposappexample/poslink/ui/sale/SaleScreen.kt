@@ -10,18 +10,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -37,6 +32,14 @@ import com.example.eposappexample.poslink.formatPrice
 import com.example.eposappexample.poslink.isValidTipInput
 import com.example.eposappexample.poslink.models.Product
 import com.example.eposappexample.poslink.ui.components.ProductGrid
+import com.teya.lemonade.Button
+import com.teya.lemonade.LemonadeTheme
+import com.teya.lemonade.LemonadeUi
+import com.teya.lemonade.Text
+import com.teya.lemonade.TextField
+import com.teya.lemonade.core.LemonadeButtonSize
+import com.teya.lemonade.core.LemonadeButtonType
+import com.teya.lemonade.core.LemonadeButtonVariant
 
 @Composable
 fun SaleScreen(
@@ -83,24 +86,25 @@ private fun SaleTopBar(
     var showMenu by remember { mutableStateOf(false) }
 
     TopAppBar(
-        title = { Text("ePOS Sample Poslink") },
+        title = { LemonadeUi.Text("ePOS Sample Poslink", textStyle = LemonadeTheme.typography.headingXSmall) },
         actions = {
             IconButton(onClick = { showMenu = true }) {
                 Icon(Icons.Default.MoreVert, contentDescription = "Menu")
             }
             DropdownMenu(
                 expanded = showMenu,
-                onDismissRequest = { showMenu = false }
+                onDismissRequest = { showMenu = false },
+                containerColor = LemonadeTheme.colors.background.bgDefault
             ) {
                 DropdownMenuItem(
-                    text = { Text("Clear User Auth") },
+                    text = { LemonadeUi.Text("Clear User Auth") },
                     onClick = {
                         showMenu = false
                         onClearUserAuth()
                     }
                 )
                 DropdownMenuItem(
-                    text = { Text("Clear Device Link") },
+                    text = { LemonadeUi.Text("Clear Device Link") },
                     onClick = {
                         showMenu = false
                         onClearDeviceLink()
@@ -132,27 +136,26 @@ private fun SaleBottomBar(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
+                LemonadeUi.Text(
                     "$itemCount item${if (itemCount != 1) "s" else ""}",
-                    style = MaterialTheme.typography.bodyLarge
+                    textStyle = LemonadeTheme.typography.bodyLargeRegular
                 )
-                Text(
+                LemonadeUi.Text(
                     "Subtotal: ${formatPrice(subtotal)}",
-                    style = MaterialTheme.typography.bodyLarge
+                    textStyle = LemonadeTheme.typography.bodyLargeRegular
                 )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            OutlinedTextField(
-                value = tipInput,
-                onValueChange = { newValue ->
+            LemonadeUi.TextField(
+                input = tipInput,
+                onInputChanged = { newValue ->
                     if (isValidTipInput(newValue)) {
                         onTipInputChange(newValue)
                     }
                 },
-                label = { Text("Tip ($currencySymbol)") },
-                singleLine = true,
+                label = "Tip ($currencySymbol)",
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -163,24 +166,24 @@ private fun SaleBottomBar(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                OutlinedButton(
+                LemonadeUi.Button(
+                    label = "Print",
                     onClick = onPrint,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp),
-                    enabled = payEnabled
-                ) {
-                    Text("Print", style = MaterialTheme.typography.titleMedium)
-                }
-                Button(
+                    variant = LemonadeButtonVariant.Secondary,
+                    type = LemonadeButtonType.Subtle,
+                    size = LemonadeButtonSize.Large,
+                    enabled = payEnabled,
+                    modifier = Modifier.weight(1f)
+                )
+                LemonadeUi.Button(
+                    label = "Pay ${formatPrice(total)}",
                     onClick = onPay,
-                    modifier = Modifier
-                        .weight(2f)
-                        .height(56.dp),
-                    enabled = payEnabled
-                ) {
-                    Text("Pay ${formatPrice(total)}", style = MaterialTheme.typography.titleMedium)
-                }
+                    variant = LemonadeButtonVariant.Primary,
+                    type = LemonadeButtonType.Solid,
+                    size = LemonadeButtonSize.Large,
+                    enabled = payEnabled,
+                    modifier = Modifier.weight(2f)
+                )
             }
         }
     }

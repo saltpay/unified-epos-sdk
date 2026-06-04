@@ -9,8 +9,10 @@ lifecycleRuntimeKtx = "2.10.0"
 activityCompose = "1.12.3"
 composeBom = "2026.01.01"
 navigationCompose = "2.9.8"
+lemonade = "0.17.1"
 
 [libraries]
+lemonade-ui = { group = "com.teya.foundation", name = "lemonade-ui", version.ref = "lemonade" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }

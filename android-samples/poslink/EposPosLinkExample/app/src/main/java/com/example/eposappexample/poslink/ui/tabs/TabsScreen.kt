@@ -1,6 +1,6 @@
 package com.example.eposappexample.poslink.ui.tabs
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -16,35 +15,24 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -52,6 +40,20 @@ import com.example.eposappexample.poslink.formatMinor
 import com.example.eposappexample.poslink.formatPrice
 import com.example.eposappexample.poslink.models.Product
 import com.example.eposappexample.poslink.ui.components.ProductGrid
+import com.teya.lemonade.Button
+import com.teya.lemonade.Card
+import com.teya.lemonade.LemonadeTheme
+import com.teya.lemonade.LemonadeUi
+import com.teya.lemonade.Switch
+import com.teya.lemonade.Tag
+import com.teya.lemonade.Text
+import com.teya.lemonade.TextField
+import com.teya.lemonade.core.LemonadeButtonSize
+import com.teya.lemonade.core.LemonadeButtonType
+import com.teya.lemonade.core.LemonadeButtonVariant
+import com.teya.lemonade.core.LemonadeCardBackground
+import com.teya.lemonade.core.LemonadeCardPadding
+import com.teya.lemonade.core.TagVoice
 import com.teya.unifiedepossdk.poslink.models.tabs.TabId
 import com.teya.unifiedepossdk.poslink.models.tabs.TabStatus
 import com.teya.unifiedepossdk.poslink.models.tabs.TabSummary
@@ -91,7 +93,7 @@ private fun TablesScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text("Pay at Table") },
+                title = { LemonadeUi.Text("Pay at Table", textStyle = LemonadeTheme.typography.headingXSmall) },
                 actions = {
                     IconButton(onClick = { viewModel.refreshTabs() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh tabs")
@@ -100,7 +102,11 @@ private fun TablesScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { viewModel.showAddTableDialog() }) {
+            FloatingActionButton(
+                onClick = { viewModel.showAddTableDialog() },
+                containerColor = LemonadeTheme.colors.background.bgBrand,
+                contentColor = LemonadeTheme.colors.content.contentOnBrandHigh,
+            ) {
                 Icon(Icons.Default.Add, contentDescription = "Add table")
             }
         }
@@ -110,9 +116,10 @@ private fun TablesScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            EnableRow(
-                enabled = viewModel.patEnabled,
-                onToggle = { viewModel.setPayAtTableEnabled(it) },
+            LemonadeUi.Switch(
+                checked = viewModel.patEnabled,
+                onCheckedChange = { viewModel.setPayAtTableEnabled(it) },
+                label = "Pay at Table on store",
                 modifier = Modifier.padding(16.dp)
             )
 
@@ -136,26 +143,6 @@ private fun TablesScreen(
 }
 
 @Composable
-private fun EnableRow(
-    enabled: Boolean,
-    onToggle: (Boolean) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Start,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            "Pay at Table on store",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(end = 8.dp)
-        )
-        Switch(checked = enabled, onCheckedChange = onToggle)
-    }
-}
-
-@Composable
 private fun TablesGrid(
     tabs: List<TabSummary>,
     totalForTab: (TabId) -> Int,
@@ -166,10 +153,11 @@ private fun TablesGrid(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Text(
+            LemonadeUi.Text(
                 "No open tables yet.\nTap + to add one.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                textStyle = LemonadeTheme.typography.bodyMediumRegular,
+                color = LemonadeTheme.colors.content.contentSecondary,
+                textAlign = TextAlign.Center
             )
         }
         return
@@ -194,50 +182,37 @@ private fun TablesGrid(
 
 @Composable
 private fun TableTile(tab: TabSummary, totalMinor: Int, onClick: () -> Unit) {
-    Card(
-        onClick = onClick, modifier = Modifier
+    LemonadeUi.Card(
+        modifier = Modifier
             .heightIn(min = 160.dp)
             .widthIn(min = 160.dp)
+            .clickable(onClick = onClick),
+        contentPadding = LemonadeCardPadding.Medium,
+        background = LemonadeCardBackground.Elevated
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(tab.tabName, style = MaterialTheme.typography.titleMedium)
-            Text(
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            LemonadeUi.Text(tab.tabName, textStyle = LemonadeTheme.typography.headingXSmall)
+            LemonadeUi.Text(
                 formatMinor(totalMinor),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary
+                textStyle = LemonadeTheme.typography.bodyMediumRegular,
+                color = LemonadeTheme.colors.content.contentBrand
             )
-            StatusBadge(status = tab.status)
+            StatusTag(status = tab.status)
         }
     }
 }
 
 @Composable
-private fun StatusBadge(status: TabStatus) {
-    val (container, content, label) = when (status) {
-        TabStatus.OPEN -> Triple(Color(0xFFDCF5E3), Color(0xFF1B5E20), "Open")
-        TabStatus.PAYING -> Triple(Color(0xFFDCE7FB), Color(0xFF0D47A1), "Paying")
-        TabStatus.PAUSED -> Triple(Color(0xFFFFF1D6), Color(0xFF8A5A00), "Paused")
-        TabStatus.COMPLETED -> Triple(Color(0xFFD7F1EF), Color(0xFF00695C), "Completed")
-        TabStatus.CLOSED -> Triple(Color(0xFFE6E6E6), Color(0xFF5F5F5F), "Closed")
-        TabStatus.UNKNOWN -> Triple(Color(0xFFE6E6E6), Color(0xFF5F5F5F), "Unknown")
+private fun StatusTag(status: TabStatus) {
+    val (voice, label) = when (status) {
+        TabStatus.OPEN -> TagVoice.Positive to "Open"
+        TabStatus.PAYING -> TagVoice.Info to "Paying"
+        TabStatus.PAUSED -> TagVoice.Warning to "Paused"
+        TabStatus.COMPLETED -> TagVoice.Positive to "Completed"
+        TabStatus.CLOSED -> TagVoice.Neutral to "Closed"
+        TabStatus.UNKNOWN -> TagVoice.Neutral to "Unknown"
     }
-    Surface(
-        shape = RoundedCornerShape(percent = 50),
-        color = container,
-        contentColor = content
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
-        )
-    }
+    LemonadeUi.Tag(label = label, voice = voice)
 }
 
 @Composable
@@ -251,7 +226,6 @@ private fun AddTableDialog(
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = MaterialTheme.shapes.large,
-            tonalElevation = 6.dp
         ) {
             Column(
                 modifier = Modifier
@@ -259,30 +233,29 @@ private fun AddTableDialog(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("Add table", style = MaterialTheme.typography.titleLarge)
-                OutlinedTextField(
-                    value = tabName,
-                    onValueChange = onTabNameChange,
-                    label = { Text("Table name (e.g. Table 5)") },
-                    singleLine = true,
+                LemonadeUi.Text("Add table", textStyle = LemonadeTheme.typography.headingSmall)
+                LemonadeUi.TextField(
+                    input = tabName,
+                    onInputChanged = onTabNameChange,
+                    label = "Table name (e.g. Table 5)",
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                Button(
+                LemonadeUi.Button(
+                    label = "Open table",
                     onClick = onOpenTab,
                     enabled = canOpenTab,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                ) {
-                    Text("Open table")
-                }
-                TextButton(
-                    onClick = onDismiss,
+                    size = LemonadeButtonSize.Large,
                     modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Cancel")
-                }
+                )
+                LemonadeUi.Button(
+                    label = "Cancel",
+                    onClick = onDismiss,
+                    variant = LemonadeButtonVariant.Neutral,
+                    type = LemonadeButtonType.Ghost,
+                    size = LemonadeButtonSize.Large,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
     }
@@ -307,7 +280,7 @@ private fun TableDetailsScreen(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(tabName) },
+                title = { LemonadeUi.Text(tabName, textStyle = LemonadeTheme.typography.headingXSmall) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -340,29 +313,20 @@ private fun TableDetailsScreen(
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                OutlinedButton(
+                LemonadeUi.Button(
+                    label = "Close tab",
                     onClick = onCloseTab,
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
-                    ),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
-                    modifier = Modifier
-                        .padding(end = 16.dp)
-                        .height(56.dp)
-                ) {
-                    Icon(Icons.Default.Close, contentDescription = null)
-                    Text("Close tab", modifier = Modifier.padding(start = 8.dp))
-                }
-
-                Button(
+                    variant = LemonadeButtonVariant.Critical,
+                    type = LemonadeButtonType.Subtle,
+                    size = LemonadeButtonSize.Large,
+                    modifier = Modifier.padding(end = 16.dp)
+                )
+                LemonadeUi.Button(
+                    label = "Add items",
                     onClick = onShowCatalogue,
-                    modifier = Modifier
-                        .padding(end = 16.dp)
-                        .height(56.dp)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null)
-                    Text("Add items", modifier = Modifier.padding(start = 8.dp))
-                }
+                    size = LemonadeButtonSize.Large,
+                    modifier = Modifier.padding(end = 16.dp)
+                )
             }
 
             HorizontalDivider()
@@ -374,11 +338,11 @@ private fun TableDetailsScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Total", style = MaterialTheme.typography.titleMedium)
-                Text(
+                LemonadeUi.Text("Total", textStyle = LemonadeTheme.typography.headingXSmall)
+                LemonadeUi.Text(
                     formatMinor(totalMinor),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary
+                    textStyle = LemonadeTheme.typography.headingXSmall,
+                    color = LemonadeTheme.colors.content.contentBrand
                 )
             }
         }
@@ -404,16 +368,15 @@ private fun ProductCatalogueDialog(
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = MaterialTheme.shapes.large,
-            tonalElevation = 6.dp
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 16.dp)
             ) {
-                Text(
+                LemonadeUi.Text(
                     "Add items",
-                    style = MaterialTheme.typography.titleLarge,
+                    textStyle = LemonadeTheme.typography.headingSmall,
                     modifier = Modifier.padding(horizontal = 16.dp)
                 )
                 ProductGrid(
@@ -423,15 +386,14 @@ private fun ProductCatalogueDialog(
                     onRemove = onRemove,
                     modifier = Modifier.heightIn(max = 420.dp)
                 )
-                Button(
+                LemonadeUi.Button(
+                    label = "Done",
                     onClick = onDismiss,
+                    size = LemonadeButtonSize.Large,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp)
-                        .height(56.dp)
-                ) {
-                    Text("Done")
-                }
+                )
             }
         }
     }
@@ -450,12 +412,12 @@ private fun CurrentItems(
             .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Text("Current items", style = MaterialTheme.typography.titleMedium)
+        LemonadeUi.Text("Current items", textStyle = LemonadeTheme.typography.headingXSmall)
         if (items.isEmpty()) {
-            Text(
+            LemonadeUi.Text(
                 "No items yet. Tap \"Add items\" to get started.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                textStyle = LemonadeTheme.typography.bodyMediumRegular,
+                color = LemonadeTheme.colors.content.contentSecondary
             )
             return
         }
@@ -465,34 +427,34 @@ private fun CurrentItems(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
+                LemonadeUi.Text(
                     "${product.emoji} ${product.name}",
-                    style = MaterialTheme.typography.bodyMedium,
+                    textStyle = LemonadeTheme.typography.bodyMediumRegular,
                     modifier = Modifier.weight(1f)
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = { onRemoveProduct(product) }) {
-                        Text(
+                        LemonadeUi.Text(
                             "−",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.primary
+                            textStyle = LemonadeTheme.typography.headingSmall,
+                            color = LemonadeTheme.colors.content.contentBrand
                         )
                     }
-                    Text(
+                    LemonadeUi.Text(
                         "${product.quantity}",
-                        style = MaterialTheme.typography.bodyMedium
+                        textStyle = LemonadeTheme.typography.bodyMediumRegular
                     )
                     IconButton(onClick = { onAddProduct(product) }) {
-                        Text(
+                        LemonadeUi.Text(
                             "+",
-                            style = MaterialTheme.typography.titleLarge,
-                            color = MaterialTheme.colorScheme.primary
+                            textStyle = LemonadeTheme.typography.headingSmall,
+                            color = LemonadeTheme.colors.content.contentBrand
                         )
                     }
                 }
-                Text(
+                LemonadeUi.Text(
                     formatPrice(product.price * product.quantity),
-                    style = MaterialTheme.typography.bodyMedium,
+                    textStyle = LemonadeTheme.typography.bodyMediumRegular,
                     modifier = Modifier.padding(start = 8.dp)
                 )
             }
