@@ -66,7 +66,10 @@ class TablesViewModel(application: Application) : AndroidViewModel(application) 
                 terminalId = request.terminalId,
                 totalAmountMinor = tabTotalMinor(request.tabId),
                 billItems = items,
-                onSuccess = { Log.d(TAG, "respondToBillRequest success") },
+                onSuccess = {
+                    Log.d(TAG, "respondToBillRequest success")
+                    refreshTab(request.tabId)
+                },
                 onFailure = { failure -> Log.e(TAG, "respondToBillRequest failure: $failure") }
             )
         }
@@ -114,6 +117,7 @@ class TablesViewModel(application: Application) : AndroidViewModel(application) 
 
         override fun onBillHidden(tabId: TabId) {
             Log.d(TAG, "onBillHidden(tab=${tabId.value})")
+            refreshTab(tabId)
         }
 
         override fun onConnectionStateChange(state: ConnectionState) {

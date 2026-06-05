@@ -88,6 +88,13 @@ fun TableDetailsScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
+            selectedTab.showingBillTerminalId?.let { terminalId ->
+                BillShowingBanner(
+                    terminalId = terminalId,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+            }
+
             CurrentItems(
                 items = items,
                 onAddProduct = { viewModel.addProduct(it) },
@@ -199,6 +206,22 @@ private fun ProductCatalogueDialog(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun BillShowingBanner(terminalId: String, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        LemonadeUi.Text(
+            "Bill showing on terminal ID",
+            textStyle = LemonadeTheme.typography.bodyMediumRegular,
+            color = LemonadeTheme.colors.content.contentSecondary
+        )
+        LemonadeUi.Tag(label = terminalId, voice = TagVoice.Info)
     }
 }
 

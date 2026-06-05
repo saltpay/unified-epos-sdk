@@ -36,6 +36,7 @@ import com.teya.lemonade.Card
 import com.teya.lemonade.LemonadeTheme
 import com.teya.lemonade.LemonadeUi
 import com.teya.lemonade.Switch
+import com.teya.lemonade.Tag
 import com.teya.lemonade.Text
 import com.teya.lemonade.TextField
 import com.teya.lemonade.core.LemonadeButtonSize
@@ -43,6 +44,7 @@ import com.teya.lemonade.core.LemonadeButtonType
 import com.teya.lemonade.core.LemonadeButtonVariant
 import com.teya.lemonade.core.LemonadeCardBackground
 import com.teya.lemonade.core.LemonadeCardPadding
+import com.teya.lemonade.core.TagVoice
 import com.teya.unifiedepossdk.poslink.models.tabs.TabId
 import com.teya.unifiedepossdk.poslink.models.tabs.TabSummary
 
@@ -166,6 +168,9 @@ private fun TableTile(tab: TabSummary, totalMinor: Int, onClick: () -> Unit) {
                 color = LemonadeTheme.colors.content.contentBrand
             )
             StatusTag(status = tab.status)
+            tab.showingBillTerminalId?.let { terminalId ->
+                LemonadeUi.Tag(label = "Bill on $terminalId", voice = TagVoice.Info)
+            }
         }
     }
 }
