@@ -44,9 +44,7 @@ android {
 }
 
 dependencies {
-    // Pay at Table ships in the unreleased SDK 1.6.0. Until it is published, this resolves
-    // the locally-built artifact from Maven Local (see README "Pay at Table" section).
-    implementation("com.teya.epos:unified-sdk-poslink:1.6.0-SNAPSHOT")
+    implementation("com.teya.epos:unified-sdk-poslink:1.6.0")
 
     implementation(libs.lemonade.ui)
     implementation(libs.androidx.core.ktx)
