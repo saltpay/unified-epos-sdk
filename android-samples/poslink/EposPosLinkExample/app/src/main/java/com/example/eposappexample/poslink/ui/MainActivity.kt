@@ -9,7 +9,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -25,6 +24,7 @@ import com.example.eposappexample.poslink.ui.tables.PayAtTableScreen
 import com.example.eposappexample.poslink.ui.theme.EposAppExampleTheme
 import com.teya.lemonade.Icon
 import com.teya.lemonade.LemonadeUi
+import com.teya.lemonade.Text
 import com.teya.lemonade.core.LemonadeIcons
 
 class MainActivity : ComponentActivity() {
@@ -63,7 +63,7 @@ private fun AppRoot() {
                                 }
                             },
                             icon = dest.icon,
-                            label = { Text(dest.label) }
+                            label = { LemonadeUi.Text(dest.label) }
                         )
                     }
                 }
