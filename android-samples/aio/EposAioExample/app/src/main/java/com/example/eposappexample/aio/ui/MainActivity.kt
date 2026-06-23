@@ -3,6 +3,7 @@ package com.example.eposappexample.aio.ui
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,16 +18,9 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -40,6 +34,17 @@ import com.example.eposappexample.aio.formatPrice
 import com.example.eposappexample.aio.isValidTipInput
 import com.example.eposappexample.aio.models.Product
 import com.example.eposappexample.aio.ui.theme.EposAppExampleTheme
+import com.teya.lemonade.Button
+import com.teya.lemonade.Card
+import com.teya.lemonade.LemonadeTheme
+import com.teya.lemonade.LemonadeUi
+import com.teya.lemonade.Text
+import com.teya.lemonade.TextField
+import com.teya.lemonade.core.LemonadeButtonSize
+import com.teya.lemonade.core.LemonadeButtonType
+import com.teya.lemonade.core.LemonadeButtonVariant
+import com.teya.lemonade.core.LemonadeCardBackground
+import com.teya.lemonade.core.LemonadeCardPadding
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,7 +65,12 @@ private fun MainScreen(viewModel: MainViewModel = viewModel()) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("ePOS Sample AIO") }
+                title = {
+                    LemonadeUi.Text(
+                        "ePOS Sample AIO",
+                        textStyle = LemonadeTheme.typography.headingXSmall
+                    )
+                }
             )
         },
         bottomBar = {
@@ -107,27 +117,26 @@ private fun BottomBar(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(
+                LemonadeUi.Text(
                     "$itemCount item${if (itemCount != 1) "s" else ""}",
-                    style = MaterialTheme.typography.bodyLarge
+                    textStyle = LemonadeTheme.typography.bodyLargeRegular
                 )
-                Text(
+                LemonadeUi.Text(
                     "Subtotal: ${formatPrice(subtotal)}",
-                    style = MaterialTheme.typography.bodyLarge
+                    textStyle = LemonadeTheme.typography.bodyLargeRegular
                 )
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            OutlinedTextField(
-                value = tipInput,
-                onValueChange = { newValue ->
+            LemonadeUi.TextField(
+                input = tipInput,
+                onInputChanged = { newValue ->
                     if (isValidTipInput(newValue)) {
                         onTipInputChange(newValue)
                     }
                 },
-                label = { Text("Tip ($currencySymbol)") },
-                singleLine = true,
+                placeholderText = "Tip (${currencySymbol})",
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.fillMaxWidth()
             )
@@ -138,30 +147,24 @@ private fun BottomBar(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                OutlinedButton(
+                LemonadeUi.Button(
+                    label = "Print",
                     onClick = onPrint,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp),
-                    enabled = payEnabled
-                ) {
-                    Text(
-                        "Print",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                }
-                Button(
+                    variant = LemonadeButtonVariant.Secondary,
+                    type = LemonadeButtonType.Subtle,
+                    size = LemonadeButtonSize.Large,
+                    enabled = payEnabled,
+                    modifier = Modifier.weight(1f)
+                )
+                LemonadeUi.Button(
+                    label = "Pay ${formatPrice(total)}",
                     onClick = onPay,
-                    modifier = Modifier
-                        .weight(2f)
-                        .height(56.dp),
-                    enabled = payEnabled
-                ) {
-                    Text(
-                        "Pay ${formatPrice(total)}",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                }
+                    variant = LemonadeButtonVariant.Primary,
+                    type = LemonadeButtonType.Solid,
+                    size = LemonadeButtonSize.Large,
+                    enabled = payEnabled,
+                    modifier = Modifier.weight(2f)
+                )
             }
         }
     }
@@ -201,43 +204,50 @@ private fun ProductCard(
     onAdd: () -> Unit,
     onRemove: () -> Unit
 ) {
-    Card(
-        onClick = onAdd,
+    LemonadeUi.Card(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 125.dp)
+            .clickable(onClick = onAdd),
+        contentPadding = LemonadeCardPadding.Medium,
+        background = LemonadeCardBackground.Elevated
     ) {
-        Column(
+        LemonadeUi.Text(
+            product.emoji,
+            textStyle = LemonadeTheme.typography.headingMedium
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        LemonadeUi.Text(
+            product.name,
+            textStyle = LemonadeTheme.typography.headingXSmall
+        )
+        LemonadeUi.Text(
+            formatPrice(product.price),
+            textStyle = LemonadeTheme.typography.bodyMediumRegular,
+            color = LemonadeTheme.colors.content.contentSecondary
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp)
+                .height(48.dp)
         ) {
-            Text(
-                product.name,
-                style = MaterialTheme.typography.titleMedium
-            )
-            Text(
-                formatPrice(product.price),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-
-            if(count > 0) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        "x$count",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    TextButton(onClick = onRemove) {
-                        Text("Remove")
-                    }
-                }
+            if (count > 0) {
+                LemonadeUi.Text(
+                    "x$count",
+                    textStyle = LemonadeTheme.typography.bodyMediumSemiBold,
+                    color = LemonadeTheme.colors.content.contentBrand
+                )
+                LemonadeUi.Button(
+                    label = "Remove",
+                    onClick = onRemove,
+                    variant = LemonadeButtonVariant.Neutral,
+                    type = LemonadeButtonType.Ghost,
+                    size = LemonadeButtonSize.Small
+                )
             }
         }
     }
