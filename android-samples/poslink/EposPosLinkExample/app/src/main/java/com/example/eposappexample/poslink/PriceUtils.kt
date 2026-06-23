@@ -3,6 +3,7 @@ package com.example.eposappexample.poslink
 import java.text.NumberFormat
 import java.util.Currency
 import java.util.Locale
+import kotlin.math.roundToInt
 
 const val CURRENCY_CODE = "GBP"
 
@@ -24,3 +25,9 @@ fun isValidTipInput(input: String): Boolean {
     }
     return !(dotIndex >= 0 && input.length - dotIndex - 1 > 2)
 }
+
+/** Formats an amount given in minor units (e.g. pence) as a currency string, e.g. 1500 -> "£15.00". */
+fun formatMinor(amountMinor: Int): String = formatPrice(amountMinor / 100.0)
+
+/** Converts a major-unit amount (e.g. 1.29) to integer minor units (e.g. 129). */
+fun toMinorUnits(amountMajor: Double): Int = (amountMajor * 100).roundToInt()

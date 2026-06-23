@@ -1,14 +1,15 @@
-package com.example.eposappexample.poslink.ui
+package com.example.eposappexample.poslink.ui.sale
 
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.example.eposappexample.poslink.TeyaUtils
+import com.example.eposappexample.poslink.teya.TeyaUtils
 import com.example.eposappexample.poslink.models.Product
+import com.example.eposappexample.poslink.toMinorUnits
 
-class MainViewModel : ViewModel() {
+class SaleViewModel : ViewModel() {
 
     var basket by mutableStateOf(listOf<Product>())
         private set
@@ -49,9 +50,7 @@ class MainViewModel : ViewModel() {
     }
 
     fun pay() {
-        val totalInMinorUnits = (total * 100).toInt()
-        val tipInMinorUnits = (tipAmount * 100).toInt()
-        TeyaUtils.makePayment(totalInMinorUnits, tipInMinorUnits)
+        TeyaUtils.makePayment(toMinorUnits(total), toMinorUnits(tipAmount))
     }
 
     fun printReceipt() {

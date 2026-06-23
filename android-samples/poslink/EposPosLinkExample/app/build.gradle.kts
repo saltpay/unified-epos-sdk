@@ -44,12 +44,14 @@ android {
 }
 
 dependencies {
-    implementation("com.teya.epos:unified-sdk:1.5.0")
+    implementation("com.teya.epos:unified-sdk-poslink:1.6.0")
 
+    implementation(libs.lemonade.ui)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.navigation.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
