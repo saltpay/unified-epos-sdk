@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentDialog
+    x:Class="EposPosLinkExample.Views.PaymentsDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:EposPosLinkExample.Views"
+    Title="Payments"
+    CloseButtonText="Done"
+    DefaultButton="Close">
+    <StackPanel Spacing="12" Width="420">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Paid"/>
+            <TextBlock Grid.Column="1" x:Name="PaidText"/>
+        </Grid>
+        <Grid x:Name="RemainingRow">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Remaining"/>
+            <TextBlock Grid.Column="1" x:Name="RemainingText"/>
+        </Grid>
+        <Border Height="1" Background="{ThemeResource LemonadeBorderBrush}"/>
+        <ItemsControl x:Name="PaymentsList" MaxHeight="320">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:PaymentRow">
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="{x:Bind AmountText}" FontWeight="SemiBold"/>
+                            <TextBlock Text="{x:Bind Descriptor}" Foreground="{ThemeResource LemonadeContentSecondaryBrush}"/>
+                            <TextBlock Text="{x:Bind TipText}" Foreground="{ThemeResource LemonadeContentSecondaryBrush}"
+                                       Visibility="{x:Bind TipVisibility}"/>
+                            <TextBlock Text="{x:Bind TimestampText}" Foreground="{ThemeResource LemonadeContentSecondaryBrush}"
+                                       Visibility="{x:Bind TimestampVisibility}"/>
+                        </StackPanel>
+                        <Border Grid.Column="1" Style="{StaticResource LemonadeTagBorderStyle}"
+                                Background="{Binding State, Converter={StaticResource StatusToBackground}}">
+                            <TextBlock Text="{Binding State, Converter={StaticResource StatusToLabel}}"
+                                       Foreground="{Binding State, Converter={StaticResource StatusToForeground}}"/>
+                        </Border>
+                    </Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </StackPanel>
+</ContentDialog>

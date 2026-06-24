@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentDialog
+    x:Class="EposPosLinkExample.Views.ProductCatalogueDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:viewmodels="using:EposPosLinkExample.ViewModels"
+    Title="Add items"
+    CloseButtonText="Done"
+    DefaultButton="Close">
+    <GridView x:Name="Catalogue" SelectionMode="None" Width="520" Height="420">
+        <GridView.ItemsPanel>
+            <ItemsPanelTemplate>
+                <ItemsWrapGrid ItemWidth="160" Orientation="Horizontal"/>
+            </ItemsPanelTemplate>
+        </GridView.ItemsPanel>
+        <GridView.ItemContainerStyle>
+            <Style TargetType="GridViewItem">
+                <Setter Property="Margin" Value="4"/>
+                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            </Style>
+        </GridView.ItemContainerStyle>
+        <GridView.ItemTemplate>
+            <DataTemplate x:DataType="viewmodels:TabProductItem">
+                <Button Command="{x:Bind AddCommand}" Padding="0" Background="Transparent" BorderThickness="0"
+                        HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+                    <Border Background="{ThemeResource LemonadeBgElevatedBrush}"
+                            BorderBrush="{ThemeResource LemonadeBorderBrush}"
+                            BorderThickness="1" CornerRadius="8" Padding="12" MinHeight="120">
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="{x:Bind Emoji}" FontSize="24"/>
+                            <TextBlock Text="{x:Bind Name}" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                            <TextBlock Text="{x:Bind LineTotalFormatted, Mode=OneWay}"
+                                       Foreground="{ThemeResource LemonadeContentSecondaryBrush}"/>
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="{x:Bind QuantityDisplay, Mode=OneWay}"
+                                           Foreground="{ThemeResource LemonadeContentBrandBrush}"
+                                           FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                <HyperlinkButton Content="Remove" Command="{x:Bind RemoveCommand}" Padding="4,2"
+                                                 Visibility="{x:Bind HasQuantity, Mode=OneWay}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Button>
+            </DataTemplate>
+        </GridView.ItemTemplate>
+    </GridView>
+</ContentDialog>
