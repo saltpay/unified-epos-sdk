@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -11,8 +12,23 @@ namespace EposPosLinkExample.Helpers
 {
     internal class TeyaSdkManager
     {
+        public static TeyaSdkManager Instance { get; } = new();
+
+        public bool IsReady { get; private set; }
+
+        public event System.EventHandler? ReadyChanged;
+
+        public void SetReady(bool ready)
+        {
+            IsReady = ready;
+            ReadyChanged?.Invoke(this, System.EventArgs.Empty);
+        }
+
         private Process? _process;
         private Dictionary<string, TaskCompletionSource<JsonElement>> _pendingRequests = new Dictionary<string, TaskCompletionSource<JsonElement>>();
+
+        private readonly Dictionary<string, Models.Tabs.Tab> _fakeTabs = new();
+        private bool _fakePatEnabled;
 
         public void StartProcess()
         {
@@ -83,6 +99,84 @@ namespace EposPosLinkExample.Helpers
         public async Task<JsonElement> PrintCustomTemplate(PrintTemplate template)
         {
             return await SendRequestAsync("printCustomTemplate", template);
+        }
+
+        public Task<bool> SetPayAtTableEnabledOnStore(bool enable)
+        {
+            // TODO: replace this in-memory placeholder with a real JSON-RPC call to "setPayAtTableEnabledOnStore"
+            _fakePatEnabled = enable;
+            return Task.FromResult(true);
+        }
+
+        public Task<Models.Tabs.Tab> OpenTab(string tabId, string tabName, string currency)
+        {
+            // TODO: replace this in-memory placeholder with a real JSON-RPC call to "openTab"
+            var tab = new Models.Tabs.Tab(
+                TabId: tabId,
+                Name: tabName,
+                Status: Models.Tabs.TabStatus.Open,
+                TotalAmount: 0,
+                TotalPaid: null,
+                Remaining: null,
+                Currency: currency,
+                ShowingBillTerminalId: null,
+                PaymentRequests: new List<Models.Tabs.PaymentRequestSummary>());
+            _fakeTabs[tabId] = tab;
+            return Task.FromResult(tab);
+        }
+
+        public Task<IReadOnlyList<Models.Tabs.TabSummary>> ListTabs()
+        {
+            // TODO: replace this in-memory placeholder with a real JSON-RPC call to "listTabs"
+            IReadOnlyList<Models.Tabs.TabSummary> result =
+                _fakeTabs.Values
+                    .Where(t => t.Status != Models.Tabs.TabStatus.Closed)
+                    .Select(t => t.ToSummary())
+                    .ToList();
+            return Task.FromResult(result);
+        }
+
+        public Task<Models.Tabs.Tab> GetTab(string tabId)
+        {
+            // TODO: replace this in-memory placeholder with a real JSON-RPC call to "getTab"
+            if (!_fakeTabs.TryGetValue(tabId, out var tab))
+            {
+                throw new InvalidOperationException($"Tab not found: {tabId}");
+            }
+            return Task.FromResult(tab);
+        }
+
+        public Task CloseTab(string tabId)
+        {
+            // TODO: replace this in-memory placeholder with a real JSON-RPC call to "closeTab"
+            _fakeTabs.Remove(tabId);
+            return Task.CompletedTask;
+        }
+
+        public Task RespondToBillRequest(string tabId, string terminalId, int totalAmountMinor, string currency)
+        {
+            // TODO: replace this in-memory placeholder with a real JSON-RPC call to "respondToBillRequest"
+            Debug.WriteLine($"[PAT placeholder] respondToBillRequest(tab={tabId}, terminal={terminalId}, total={totalAmountMinor} {currency})");
+            return Task.CompletedTask;
+        }
+
+        public Task MakeTabPayment(string tabId, int amount, string currency)
+        {
+            // TODO: replace this in-memory placeholder with a real JSON-RPC call to "makePaymentAndSubscribe" with a tab context
+            Debug.WriteLine($"[PAT placeholder] makeTabPayment(tab={tabId}, amount={amount} {currency})");
+            return Task.CompletedTask;
+        }
+
+        public void SubscribeToTabEvents()
+        {
+            // TODO: replace this in-memory placeholder with a real JSON-RPC subscription to tab events
+            Debug.WriteLine("[PAT placeholder] subscribeToTabEvents");
+        }
+
+        public void UnsubscribeFromTabEvents()
+        {
+            // TODO: replace this in-memory placeholder with a real JSON-RPC unsubscription from tab events
+            Debug.WriteLine("[PAT placeholder] unsubscribeFromTabEvents");
         }
 
         private async Task<JsonElement> SendRequestAsync(string methodName, object? parameters = null)
