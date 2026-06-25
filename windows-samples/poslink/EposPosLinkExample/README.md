@@ -3,7 +3,7 @@
 A sample Windows app demonstrating integration with the Teya Unified ePOS SDK using **PosLink**. The app has two flows, switchable via the left navigation pane:
 
 - **Sale** — a simple point-of-sale flow: browse a product catalog, add items to a basket, take a payment with optional tip, and print a receipt.
-- **Pay at Table** — an event-driven integration where terminals drive the bill and payment for open tabs (tables), and the app responds. In this sample the Pay at Table SDK calls are left as TODO placeholders backed by an in-memory fake, so the UI is fully usable before the SDK is wired in. Search `TeyaSdkManager.cs` for `TODO: replace this in-memory placeholder` to find each call site.
+- **Pay at Table** — an event-driven integration where terminals drive the bill and payment for open tabs (tables), and the app responds.
 
 Documentation for the SDK using PosLink on Windows can be found [here](https://docs.teya.com/epos-sdk/poslink/windows/getting-started).
 

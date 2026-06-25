@@ -13,20 +13,20 @@ internal static class StatusVoice
 {
     public static (string Label, TagVoice Voice) ForTab(TabStatus status) => status switch
     {
-        TabStatus.Open => ("Open", TagVoice.Positive),
-        TabStatus.Paying => ("Paying", TagVoice.Info),
-        TabStatus.Paused => ("Paused", TagVoice.Warning),
-        TabStatus.Completed => ("Completed", TagVoice.Positive),
-        TabStatus.Closed => ("Closed", TagVoice.Neutral),
+        TabStatus.OPEN => ("Open", TagVoice.Positive),
+        TabStatus.PAYING => ("Paying", TagVoice.Info),
+        TabStatus.PAUSED => ("Paused", TagVoice.Warning),
+        TabStatus.COMPLETED => ("Completed", TagVoice.Positive),
+        TabStatus.CLOSED => ("Closed", TagVoice.Neutral),
         _ => ("Unknown", TagVoice.Neutral),
     };
 
     public static (string Label, TagVoice Voice) ForPayment(PaymentState state) => state switch
     {
-        PaymentState.Successful => ("Paid", TagVoice.Positive),
-        PaymentState.Canceled => ("Canceled", TagVoice.Neutral),
-        PaymentState.ProcessingFailed => ("Failed", TagVoice.Critical),
-        PaymentState.CommunicationFailed => ("Failed", TagVoice.Critical),
+        PaymentState.SUCCESSFUL => ("Paid", TagVoice.Positive),
+        PaymentState.CANCELED => ("Canceled", TagVoice.Neutral),
+        PaymentState.PROCESSING_FAILED => ("Failed", TagVoice.Critical),
+        PaymentState.COMMUNICATION_FAILED => ("Failed", TagVoice.Critical),
         _ => (state.ToString(), TagVoice.Info),
     };
 

@@ -51,7 +51,7 @@ public partial class SaleViewModel : ObservableObject
         TipInput = "";
 
         Products = new ObservableCollection<ProductItem>(
-            Product.GetProducts().Select(p => new ProductItem(p.Id, p.Name, p.Price))
+            Product.GetProducts().Select(p => new ProductItem(p.Id, p.Name, p.Price, p.Emoji))
         );
 
         foreach (var product in Products)

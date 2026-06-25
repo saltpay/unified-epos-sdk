@@ -55,6 +55,7 @@
 	
   <Target Name="CleanIntegrationsApp" BeforeTargets="Build">
     <RemoveDir Directories="$(OutputPath)\TeyaEposIntegrationsApp" />
+    <RemoveDir Directories="$(OutputPath)\$(RuntimeIdentifier)\AppX\TeyaEposIntegrationsApp" />
   </Target>
 
   <ItemGroup>

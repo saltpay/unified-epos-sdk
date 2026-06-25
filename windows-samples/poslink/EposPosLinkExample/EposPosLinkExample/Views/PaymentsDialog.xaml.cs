@@ -22,7 +22,7 @@ public sealed partial class PaymentsDialog : ContentDialog
         {
             RemainingRow.Visibility = Visibility.Collapsed;
         }
-        PaymentsList.ItemsSource = tab.PaymentRequests.Select(p => new PaymentRow(p)).ToList();
+        PaymentsList.ItemsSource = (tab.PaymentRequests ?? []).Select(p => new PaymentRow(p)).ToList();
     }
 }
 

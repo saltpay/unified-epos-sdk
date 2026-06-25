@@ -10,6 +10,18 @@ using System.Threading.Tasks;
 
 namespace EposPosLinkExample.Helpers
 {
+    internal class TabEventArgs : EventArgs
+    {
+        public string Method { get; }
+        public JsonElement Params { get; }
+
+        public TabEventArgs(string method, JsonElement parameters)
+        {
+            Method = method;
+            Params = parameters;
+        }
+    }
+
     internal class TeyaSdkManager
     {
         public static TeyaSdkManager Instance { get; } = new();
@@ -17,6 +29,8 @@ namespace EposPosLinkExample.Helpers
         public bool IsReady { get; private set; }
 
         public event System.EventHandler? ReadyChanged;
+
+        public event EventHandler<TabEventArgs>? TabEventReceived;
 
         public void SetReady(bool ready)
         {
@@ -28,7 +42,6 @@ namespace EposPosLinkExample.Helpers
         private Dictionary<string, TaskCompletionSource<JsonElement>> _pendingRequests = new Dictionary<string, TaskCompletionSource<JsonElement>>();
 
         private readonly Dictionary<string, Models.Tabs.Tab> _fakeTabs = new();
-        private bool _fakePatEnabled;
 
         public void StartProcess()
         {
@@ -101,82 +114,112 @@ namespace EposPosLinkExample.Helpers
             return await SendRequestAsync("printCustomTemplate", template);
         }
 
-        public Task<bool> SetPayAtTableEnabledOnStore(bool enable)
+        public async Task<bool> SetPayAtTableEnabledOnStore(bool enable)
         {
-            // TODO: replace this in-memory placeholder with a real JSON-RPC call to "setPayAtTableEnabledOnStore"
-            _fakePatEnabled = enable;
-            return Task.FromResult(true);
-        }
-
-        public Task<Models.Tabs.Tab> OpenTab(string tabId, string tabName, string currency)
-        {
-            // TODO: replace this in-memory placeholder with a real JSON-RPC call to "openTab"
-            var tab = new Models.Tabs.Tab(
-                TabId: tabId,
-                Name: tabName,
-                Status: Models.Tabs.TabStatus.Open,
-                TotalAmount: 0,
-                TotalPaid: null,
-                Remaining: null,
-                Currency: currency,
-                ShowingBillTerminalId: null,
-                PaymentRequests: new List<Models.Tabs.PaymentRequestSummary>());
-            _fakeTabs[tabId] = tab;
-            return Task.FromResult(tab);
-        }
-
-        public Task<IReadOnlyList<Models.Tabs.TabSummary>> ListTabs()
-        {
-            // TODO: replace this in-memory placeholder with a real JSON-RPC call to "listTabs"
-            IReadOnlyList<Models.Tabs.TabSummary> result =
-                _fakeTabs.Values
-                    .Where(t => t.Status != Models.Tabs.TabStatus.Closed)
-                    .Select(t => t.ToSummary())
-                    .ToList();
-            return Task.FromResult(result);
-        }
-
-        public Task<Models.Tabs.Tab> GetTab(string tabId)
-        {
-            // TODO: replace this in-memory placeholder with a real JSON-RPC call to "getTab"
-            if (!_fakeTabs.TryGetValue(tabId, out var tab))
+            var parameters = new
             {
-                throw new InvalidOperationException($"Tab not found: {tabId}");
-            }
-            return Task.FromResult(tab);
+                enable
+            };
+
+            var result = await SendRequestAsync("setPayAtTableEnabledOnStore", parameters);
+            bool success = !result.TryGetProperty("failureReason", out var reason) || reason.ValueKind == JsonValueKind.Null;
+            return success;
         }
 
-        public Task CloseTab(string tabId)
+        public async Task<Models.Tabs.Tab> OpenTab(string tabId, string tabName, string currency)
         {
-            // TODO: replace this in-memory placeholder with a real JSON-RPC call to "closeTab"
-            _fakeTabs.Remove(tabId);
-            return Task.CompletedTask;
+            var parameters = new
+            {
+                tabId,
+                tabName,
+                currency
+            };
+
+            var result = await SendRequestAsync("openTab", parameters);
+            return JsonSerializer.Deserialize<Models.Tabs.Tab>(result.GetProperty("tab"))
+                ?? throw new InvalidOperationException("Failed to deserialize tab response");
         }
 
-        public Task RespondToBillRequest(string tabId, string terminalId, int totalAmountMinor, string currency)
+        public async Task<IReadOnlyList<Models.Tabs.TabSummary>> ListTabs()
         {
-            // TODO: replace this in-memory placeholder with a real JSON-RPC call to "respondToBillRequest"
-            Debug.WriteLine($"[PAT placeholder] respondToBillRequest(tab={tabId}, terminal={terminalId}, total={totalAmountMinor} {currency})");
-            return Task.CompletedTask;
+            var parameters = new
+            {
+                after = (string?)null,
+                before = (string?)null,
+                limit = 100
+            };
+
+            var result = await SendRequestAsync("listTabs", parameters);
+            return JsonSerializer.Deserialize<List<Models.Tabs.TabSummary>>(result.GetProperty("page").GetProperty("items"))
+                ?? throw new InvalidOperationException("Failed to deserialize listTabs response");
         }
 
-        public Task MakeTabPayment(string tabId, int amount, string currency)
+        public async Task<Models.Tabs.Tab> GetTab(string tabId)
         {
-            // TODO: replace this in-memory placeholder with a real JSON-RPC call to "makePaymentAndSubscribe" with a tab context
-            Debug.WriteLine($"[PAT placeholder] makeTabPayment(tab={tabId}, amount={amount} {currency})");
-            return Task.CompletedTask;
+            var parameters = new
+            {
+                tabId
+            };
+
+            var result = await SendRequestAsync("getTab", parameters);
+            return JsonSerializer.Deserialize<Models.Tabs.Tab>(result.GetProperty("tab"))
+                ?? throw new InvalidOperationException("Failed to deserialize tab response");
         }
 
-        public void SubscribeToTabEvents()
+        public async Task<JsonElement> CloseTab(string tabId)
         {
-            // TODO: replace this in-memory placeholder with a real JSON-RPC subscription to tab events
-            Debug.WriteLine("[PAT placeholder] subscribeToTabEvents");
+            var parameters = new
+            {
+                tabId
+            };
+
+            return await SendRequestAsync("closeTab", parameters);
         }
 
-        public void UnsubscribeFromTabEvents()
+        public async Task RespondToBillRequest(string tabId, string terminalId, int totalAmountMinor, string currency, PrintTemplate printModel)
         {
-            // TODO: replace this in-memory placeholder with a real JSON-RPC unsubscription from tab events
-            Debug.WriteLine("[PAT placeholder] unsubscribeFromTabEvents");
+            var parameters = new
+            {
+                tabId,
+                terminalId,
+                totalAmount = totalAmountMinor,
+                currency,
+                printModel = printModel.Rows
+            };
+
+            await SendRequestAsync("respondToBillRequest", parameters);
+        }
+
+        public async Task<JsonElement> MakeTabPayment(string tabId, string terminalId, int amount, string currency, string type, string method, int? tip = null)
+        {
+            var transactionId = $"tx-{Guid.NewGuid()}";
+            var parameters = new
+            {
+                transactionId,
+                amount,
+                currency,
+                useTeyaDefaultUi = false,
+                tip,
+                tabContext = new
+                {
+                    tabId,
+                    terminalId,
+                    type,
+                    method
+                }
+            };
+
+            return await SendRequestAsync("makePaymentAndSubscribe", parameters);
+        }
+
+        public async Task<JsonElement> SubscribeToTabEvents()
+        {
+            return await SendRequestAsync("subscribeTabEvents");
+        }
+
+        public async Task<JsonElement> UnsubscribeFromTabEvents()
+        {
+            return await SendRequestAsync("unsubscribeTabEvents");
         }
 
         private async Task<JsonElement> SendRequestAsync(string methodName, object? parameters = null)
@@ -245,8 +288,7 @@ namespace EposPosLinkExample.Helpers
 
             if (!root.TryGetProperty("id", out JsonElement idElement))
             {
-                // This might be a notification, not a response to a request
-                Debug.WriteLine($"Received notification: {responseJson}");
+                ProcessNotification(root);
                 return;
             }
 
@@ -280,6 +322,31 @@ namespace EposPosLinkExample.Helpers
             {
                 tcs.SetException(new Exception("Invalid JSON-RPC response: missing result"));
             }
+        }
+
+        private void ProcessNotification(JsonElement root)
+        {
+            if (!root.TryGetProperty("result", out var result))
+            {
+                Debug.WriteLine($"Received notification without result: {root}");
+                return;
+            }
+
+            if (!result.TryGetProperty("type", out var typeElement))
+            {
+                Debug.WriteLine($"Received notification without type: {root}");
+                return;
+            }
+
+            var type = typeElement.GetString();
+            if (type == null) return;
+
+            // Extract event name from "subscribeTabEvents->onPayRequested" format
+            var arrowIndex = type.IndexOf("->");
+            var eventName = arrowIndex >= 0 ? type.Substring(arrowIndex + 2) : type;
+
+            Debug.WriteLine($"Tab event: {eventName}");
+            TabEventReceived?.Invoke(this, new TabEventArgs(eventName, result));
         }
 
         private bool MatchSignatureCertificate(string exePath, string cerFilePath)
