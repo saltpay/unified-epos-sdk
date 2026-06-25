@@ -158,25 +158,15 @@ public partial class TablesViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task RefreshSelectedTabDetail()
-    {
-        if (SelectedTabId == null) return;
-        var tab = await _sdk.GetTab(SelectedTabId);
-        SelectedTabDetail = tab;
-        SelectedTab = tab.ToSummary() with { TotalAmount = TabTotalMinor(tab.TabId) };
-        UpdateTile(tab);
-    }
+    private Task RefreshSelectedTabDetail() =>
+        SelectedTabId != null ? RefreshTab(SelectedTabId) : Task.CompletedTask;
 
     [RelayCommand]
     private async Task CloseTab()
     {
         if (SelectedTabId == null) return;
-        var tabId = SelectedTabId;
-        await _sdk.CloseTab(tabId);
-        var tile = Tiles.FirstOrDefault(t => t.TabId == tabId);
-        if (tile != null) Tiles.Remove(tile);
-        _itemsByTab.Remove(tabId);
-        CloseTableDetails();
+        await _sdk.CloseTab(SelectedTabId);
+        RemoveTab(SelectedTabId);
     }
 
     public void SetProductQuantity(int id, string name, decimal price, string emoji, int quantity)
@@ -271,13 +261,14 @@ public partial class TablesViewModel : ObservableObject
                 case "onPayRequested":
                     _ = HandlePayRequested(e.Params);
                     break;
-                case "onPaymentProgress":
-                    var progressTabId = GetPaymentString(e.Params, "tabId");
-                    if (progressTabId != null) _ = RefreshTab(progressTabId);
+                case "onTabCompleted":
+                    var completedId = GetString(e.Params, "tabId");
+                    if (completedId != null) _ = HandleTabCompleted(completedId);
                     break;
+                case "onPaymentProgress":
                 case "onPaymentCompleted":
-                    var payCompletedTabId = GetPaymentString(e.Params, "tabId");
-                    if (payCompletedTabId != null) _ = RefreshTab(payCompletedTabId);
+                    var payTabId = GetPaymentString(e.Params, "tabId");
+                    if (payTabId != null) _ = RefreshTab(payTabId);
                     break;
                 case "onTabPaused":
                 case "onTabResumed":
@@ -285,18 +276,8 @@ public partial class TablesViewModel : ObservableObject
                     var tabId = GetString(e.Params, "tabId");
                     if (tabId != null) _ = RefreshTab(tabId);
                     break;
-                case "onTabCompleted":
-                    var completedTabId = GetString(e.Params, "tabId");
-                    if (completedTabId != null) _ = HandleTabCompleted(completedTabId);
-                    break;
-                case "onConnectionStateChange":
-                    Debug.WriteLine($"Connection state changed: {e.Params}");
-                    break;
-                case "onUnsubscribed":
-                    Debug.WriteLine("Unsubscribed from tab events");
-                    break;
                 default:
-                    Debug.WriteLine($"Unknown tab event: {e.Method}");
+                    Debug.WriteLine($"Tab event: {e.Method}");
                     break;
             }
         }
@@ -321,7 +302,7 @@ public partial class TablesViewModel : ObservableObject
 
         var items = _itemsByTab.TryGetValue(tabId, out var itemList) ? itemList.ToList() : new List<TabProductItem>();
         var totalMinor = TabTotalMinor(tabId);
-        var printTemplate = BuildBillTemplate(tile.Name, items, totalMinor);
+        var printTemplate = ReceiptTemplateBuilder.BuildTableBillTemplate(tile.Name, items, totalMinor);
 
         try
         {
@@ -364,10 +345,7 @@ public partial class TablesViewModel : ObservableObject
         try
         {
             await _sdk.CloseTab(tabId);
-            var tile = Tiles.FirstOrDefault(t => t.TabId == tabId);
-            if (tile != null) Tiles.Remove(tile);
-            _itemsByTab.Remove(tabId);
-            if (SelectedTabId == tabId) CloseTableDetails();
+            RemoveTab(tabId);
         }
         catch (Exception ex)
         {
@@ -380,16 +358,11 @@ public partial class TablesViewModel : ObservableObject
         try
         {
             var tab = await _sdk.GetTab(tabId);
-
             if (tab.Status is TabStatus.CLOSED)
             {
-                var tile = Tiles.FirstOrDefault(t => t.TabId == tabId);
-                if (tile != null) Tiles.Remove(tile);
-                _itemsByTab.Remove(tabId);
-                if (tabId == SelectedTabId) CloseTableDetails();
+                RemoveTab(tabId);
                 return;
             }
-
             UpdateTile(tab);
             if (tabId == SelectedTabId)
             {
@@ -403,45 +376,12 @@ public partial class TablesViewModel : ObservableObject
         }
     }
 
-    private static PrintTemplate BuildBillTemplate(string tabName, IReadOnlyList<TabProductItem> items, int totalMinor)
+    private void RemoveTab(string tabId)
     {
-        var rows = new List<ReceiptRow>
-        {
-            new ReceiptRowItem
-            {
-                Item = new RowElementText { Text = "BILL", Align = Align.CENTER, Bold = true }
-            },
-            new ReceiptRowItem
-            {
-                Item = new RowElementText { Text = tabName, Align = Align.CENTER }
-            },
-            new ReceiptRowSpacer(),
-            new ReceiptRowDivider(),
-        };
-
-        foreach (var item in items)
-        {
-            rows.Add(new ReceiptRowItems
-            {
-                Items = new List<RowElement>
-                {
-                    new RowElementText { Text = $"{item.Quantity}x {item.Name.ToUpper()}", Align = Align.LEFT },
-                    new RowElementText { Text = PriceUtils.FormatPrice(item.Price * item.Quantity), Align = Align.RIGHT }
-                }
-            });
-        }
-
-        rows.Add(new ReceiptRowDivider());
-        rows.Add(new ReceiptRowItems
-        {
-            Items = new List<RowElement>
-            {
-                new RowElementText { Text = "TOTAL", Align = Align.LEFT, Bold = true },
-                new RowElementText { Text = PriceUtils.FormatMinor(totalMinor), Align = Align.RIGHT, Bold = true }
-            }
-        });
-
-        return new PrintTemplate { Rows = rows };
+        var tile = Tiles.FirstOrDefault(t => t.TabId == tabId);
+        if (tile != null) Tiles.Remove(tile);
+        _itemsByTab.Remove(tabId);
+        if (SelectedTabId == tabId) CloseTableDetails();
     }
 
     private static string? GetPaymentString(JsonElement element, string propertyName) =>

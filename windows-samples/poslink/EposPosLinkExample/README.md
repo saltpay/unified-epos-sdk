@@ -37,6 +37,6 @@ Documentation for the SDK using PosLink on Windows can be found [here](https://d
 ## Tech Stack
 
 - **Language:** C#
-- **UI:** WinUI 3 (Windows App SDK) with XAML; Pay at Table reuses Teya's **Lemonade** color palette (replicated in `Themes/Lemonade.xaml`, since the Lemonade UI library is Android/Compose-only)
+- **UI:** WinUI 3 (Windows App SDK) with XAML
 - **Navigation:** `NavigationView` (left pane)
 - **Architecture:** MVVM with CommunityToolkit.Mvvm

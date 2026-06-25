@@ -3,36 +3,23 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace EposPosLinkExample.Helpers
 {
-    internal class TabEventArgs : EventArgs
-    {
-        public string Method { get; }
-        public JsonElement Params { get; }
-
-        public TabEventArgs(string method, JsonElement parameters)
-        {
-            Method = method;
-            Params = parameters;
-        }
-    }
-
     internal class TeyaSdkManager
     {
         public static TeyaSdkManager Instance { get; } = new();
 
         public bool IsReady { get; private set; }
 
-        public event System.EventHandler? ReadyChanged;
+        public event EventHandler? ReadyChanged;
 
         public event EventHandler<TabEventArgs>? TabEventReceived;
 
-        public void SetReady(bool ready)
+        private void SetReady(bool ready)
         {
             IsReady = ready;
             ReadyChanged?.Invoke(this, System.EventArgs.Empty);
@@ -40,8 +27,6 @@ namespace EposPosLinkExample.Helpers
 
         private Process? _process;
         private Dictionary<string, TaskCompletionSource<JsonElement>> _pendingRequests = new Dictionary<string, TaskCompletionSource<JsonElement>>();
-
-        private readonly Dictionary<string, Models.Tabs.Tab> _fakeTabs = new();
 
         public void StartProcess()
         {
@@ -80,7 +65,13 @@ namespace EposPosLinkExample.Helpers
 
         public async Task<JsonElement> Setup()
         {
-            return await SendRequestAsync("setup");
+            var result = await SendRequestAsync("setup");
+
+            bool success = result.TryGetProperty("response", out JsonElement response)
+                           && response.GetString() == "SUCCESS";
+            SetReady(success);
+
+            return result;
         }
 
         public async Task<JsonElement> ClearUserAuth()
@@ -370,6 +361,18 @@ namespace EposPosLinkExample.Helpers
                 Console.WriteLine($"Error verifying signature: {ex.Message}");
                 return false;
             }
+        }
+    }
+
+    internal class TabEventArgs : EventArgs
+    {
+        public string Method { get; }
+        public JsonElement Params { get; }
+
+        public TabEventArgs(string method, JsonElement parameters)
+        {
+            Method = method;
+            Params = parameters;
         }
     }
 }

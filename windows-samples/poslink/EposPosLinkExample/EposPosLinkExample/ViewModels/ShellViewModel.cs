@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Text.Json;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -38,17 +37,8 @@ public partial class ShellViewModel : ObservableObject
         var setupResponse = await _teyaSdkManager.Setup();
         Debug.WriteLine($"{setupResponse}");
 
-        if (setupResponse.TryGetProperty("response", out JsonElement response) && response.GetString() == "SUCCESS")
-        {
-            SdkStatusMessage = "SDK ready";
-            IsSdkReady = true;
-        }
-        else
-        {
-            SdkStatusMessage = "SDK setup failed";
-        }
-
-        _teyaSdkManager.SetReady(IsSdkReady);
+        IsSdkReady = _teyaSdkManager.IsReady;
+        SdkStatusMessage = IsSdkReady ? "SDK ready" : "SDK setup failed";
     }
 
     [RelayCommand]
