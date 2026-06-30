@@ -1,4 +1,5 @@
 import SwiftUI
+import Lemonade
 
 struct ProductCard: View {
     let product: Product
@@ -7,41 +8,38 @@ struct ProductCard: View {
     let onRemove: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(product.name)
-                .font(.headline)
+        LemonadeUi.Card(contentPadding: .medium, background: .elevated) {
+            VStack(alignment: .leading, spacing: 4) {
+                LemonadeUi.Text(product.emoji, textStyle: LemonadeTypography.shared.headingMedium)
+                LemonadeUi.Text(product.name, textStyle: LemonadeTypography.shared.headingXSmall)
+                LemonadeUi.Text(
+                    PriceUtils.formatPrice(product.price),
+                    textStyle: LemonadeTypography.shared.bodyMediumRegular,
+                    color: LemonadeTheme.colors.content.contentSecondary
+                )
 
-            Text(PriceUtils.formatPrice(product.price))
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-
-            Spacer().frame(height: 4)
-
-            HStack {
-                Text("x\(count)")
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.tint)
-
-                Spacer()
-
-                Button("Remove") {
-                    onRemove()
+                HStack {
+                    if count > 0 {
+                        LemonadeUi.Text(
+                            "x\(count)",
+                            textStyle: LemonadeTypography.shared.bodyMediumSemiBold,
+                            color: LemonadeTheme.colors.content.contentBrand
+                        )
+                        Spacer()
+                        LemonadeUi.Button(
+                            label: "Remove",
+                            onClick: onRemove,
+                            variant: .neutral,
+                            type: .ghost,
+                            size: .small
+                        )
+                    }
                 }
-                .font(.caption)
-                .disabled(count == 0)
+                .frame(height: 44)
             }
-            .opacity(count > 0 ? 1 : 0)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.secondarySystemBackground))
-        )
-        .contentShape(RoundedRectangle(cornerRadius: 12))
-        .onTapGesture {
-            onAdd()
-        }
+        .contentShape(Rectangle())
+        .onTapGesture(perform: onAdd)
     }
 }

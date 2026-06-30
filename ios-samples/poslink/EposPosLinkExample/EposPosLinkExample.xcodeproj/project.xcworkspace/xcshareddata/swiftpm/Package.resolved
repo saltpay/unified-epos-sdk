@@ -1,13 +1,22 @@
 {
-  "originHash" : "8fed4e88e7cb699a053afd8e4548c9cb38e6f165c03909a03ba44d424a5e2cbd",
+  "originHash" : "c211b365e7aa73d4863066940fae0d6589edacabb9e2bb169fe39d0ee07dc872",
   "pins" : [
+    {
+      "identity" : "lemonade-design-system",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/saltpay/lemonade-design-system.git",
+      "state" : {
+        "revision" : "04379d4aaa200eb9ca60ef718e85323934ddb3ff",
+        "version" : "0.16.3"
+      }
+    },
     {
       "identity" : "teya-unified-epos-sdk-pod-spm",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/saltpay/teya-unified-epos-sdk-pod-spm",
       "state" : {
-        "revision" : "2e4ec3f2ce005b822cd9011b27102b38e17c2205",
-        "version" : "1.5.0"
+        "revision" : "004282259c55fb41cf14849790cdad72b069b77f",
+        "version" : "1.6.0"
       }
     }
   ],

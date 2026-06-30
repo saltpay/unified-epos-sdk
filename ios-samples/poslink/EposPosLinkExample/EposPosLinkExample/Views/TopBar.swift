@@ -1,4 +1,5 @@
 import SwiftUI
+import Lemonade
 
 struct TopBar: ToolbarContent {
     let onClearUserAuth: () -> Void
@@ -14,7 +15,7 @@ struct TopBar: ToolbarContent {
                     onClearDeviceLink()
                 }
             } label: {
-                Image(systemName: "ellipsis.circle")
+                LemonadeUi.Icon(icon: .ellipsisVertical, contentDescription: "More options")
             }
         }
     }

@@ -1,4 +1,5 @@
 import SwiftUI
+import Lemonade
 
 struct BottomBar: View {
     let itemCount: Int
@@ -15,41 +16,50 @@ struct BottomBar: View {
 
             VStack(spacing: 12) {
                 HStack {
-                    Text("\(itemCount) item\(itemCount != 1 ? "s" : "")")
+                    LemonadeUi.Text(
+                        "\(itemCount) item\(itemCount != 1 ? "s" : "")",
+                        textStyle: LemonadeTypography.shared.bodyMediumRegular
+                    )
                     Spacer()
-                    Text("Subtotal: \(PriceUtils.formatPrice(subtotal))")
+                    LemonadeUi.Text(
+                        "Subtotal: \(PriceUtils.formatPrice(subtotal))",
+                        textStyle: LemonadeTypography.shared.bodyMediumRegular
+                    )
                 }
-                .font(.body)
 
-                TextField("Tip (\(PriceUtils.currencySymbol))", text: $tipInput)
-                    .keyboardType(.decimalPad)
-                    .textFieldStyle(.roundedBorder)
-                    .onChange(of: tipInput) { _, newValue in
+                LemonadeUi.TextField(
+                    input: $tipInput,
+                    onInputChanged: { newValue in
                         if !PriceUtils.isValidTipInput(newValue) {
                             tipInput = String(newValue.dropLast())
                         }
-                    }
+                    },
+                    label: "Tip (\(PriceUtils.currencySymbol))",
+                    placeholderText: "0.00"
+                )
 
                 HStack(spacing: 8) {
-                    Button("Print") {
-                        onPrint()
-                    }
-                    .buttonStyle(.bordered)
+                    LemonadeUi.Button(
+                        label: "Print",
+                        onClick: onPrint,
+                        variant: .neutral,
+                        type: .subtle,
+                        size: .large,
+                        enabled: payEnabled
+                    )
                     .frame(maxWidth: .infinity)
-                    .frame(height: 44)
-                    .disabled(!payEnabled)
 
-                    Button("Pay \(PriceUtils.formatPrice(total))") {
-                        onPay()
-                    }
-                    .buttonStyle(.borderedProminent)
+                    LemonadeUi.Button(
+                        label: "Pay \(PriceUtils.formatPrice(total))",
+                        onClick: onPay,
+                        size: .large,
+                        enabled: payEnabled
+                    )
                     .frame(maxWidth: .infinity)
-                    .frame(height: 44)
-                    .disabled(!payEnabled)
                 }
             }
             .padding(16)
         }
-        .background(Color(.systemBackground))
+        .background(LemonadeTheme.colors.background.bgDefault)
     }
 }

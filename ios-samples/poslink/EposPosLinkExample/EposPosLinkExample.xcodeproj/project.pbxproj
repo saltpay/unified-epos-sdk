@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		4F5D42B72F3A0EF9008DAF8A /* TeyaUnifiedEposSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 4F5D42B62F3A0EF9008DAF8A /* TeyaUnifiedEposSDK */; };
+		AA00000000000000000000B1 /* Lemonade in Frameworks */ = {isa = PBXBuildFile; productRef = AA00000000000000000000B2 /* Lemonade */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -41,6 +42,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4F5D42B72F3A0EF9008DAF8A /* TeyaUnifiedEposSDK in Frameworks */,
+				AA00000000000000000000B1 /* Lemonade in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -85,6 +87,7 @@
 			name = EposPoslinkExample;
 			packageProductDependencies = (
 				4F5D42B62F3A0EF9008DAF8A /* TeyaUnifiedEposSDK */,
+				AA00000000000000000000B2 /* Lemonade */,
 			);
 			productName = EposPoslinkExample;
 			productReference = 4F5D42902F3A070C008DAF8A /* EposPoslinkExample.app */;
@@ -116,6 +119,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				4F5D42B52F3A0EF9008DAF8A /* XCRemoteSwiftPackageReference "teya-unified-epos-sdk-pod-spm" */,
+				AA00000000000000000000B5 /* XCRemoteSwiftPackageReference "lemonade-design-system" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 4F5D42912F3A070C008DAF8A /* Products */;
@@ -401,6 +405,14 @@
 				minimumVersion = 1.5.0;
 			};
 		};
+		AA00000000000000000000B5 /* XCRemoteSwiftPackageReference "lemonade-design-system" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/saltpay/lemonade-design-system.git";
+			requirement = {
+				kind = upToNextMinorVersion;
+				minimumVersion = 0.16.3;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -408,6 +420,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 4F5D42B52F3A0EF9008DAF8A /* XCRemoteSwiftPackageReference "teya-unified-epos-sdk-pod-spm" */;
 			productName = TeyaUnifiedEposSDK;
+		};
+		AA00000000000000000000B2 /* Lemonade */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AA00000000000000000000B5 /* XCRemoteSwiftPackageReference "lemonade-design-system" */;
+			productName = Lemonade;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
