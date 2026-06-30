@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentDialog
+    x:Class="EposPosLinkExample.Views.AddTableDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Add table"
+    PrimaryButtonText="Open table"
+    CloseButtonText="Cancel"
+    DefaultButton="Primary"
+    IsPrimaryButtonEnabled="False">
+    <StackPanel Spacing="12">
+        <TextBox x:Name="NameBox" Header="Table name (e.g. Table 5)" TextChanged="NameBox_TextChanged"/>
+    </StackPanel>
+</ContentDialog>

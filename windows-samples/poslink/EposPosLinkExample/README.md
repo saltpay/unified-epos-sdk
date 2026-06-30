@@ -1,6 +1,9 @@
 # Windows PosLink Sample App
 
-A sample Windows app demonstrating integration with the Teya Unified ePOS SDK using **PosLink**. The app implements a simple point-of-sale flow: browsing a product catalog, adding items to a basket, processing a payment with optional tip, and printing a receipt.
+A sample Windows app demonstrating integration with the Teya Unified ePOS SDK using **PosLink**. The app has two flows, switchable via the left navigation pane:
+
+- **Sale** — a simple point-of-sale flow: browse a product catalog, add items to a basket, take a payment with optional tip, and print a receipt.
+- **Pay at Table** — an event-driven integration where terminals drive the bill and payment for open tabs (tables), and the app responds.
 
 Documentation for the SDK using PosLink on Windows can be found [here](https://docs.teya.com/epos-sdk/poslink/windows/getting-started).
 
@@ -35,4 +38,5 @@ Documentation for the SDK using PosLink on Windows can be found [here](https://d
 
 - **Language:** C#
 - **UI:** WinUI 3 (Windows App SDK) with XAML
+- **Navigation:** `NavigationView` (left pane)
 - **Architecture:** MVVM with CommunityToolkit.Mvvm

@@ -11,6 +11,16 @@ public static class PriceUtils
         return amount.ToString("C", UkCulture);
     }
 
+    public static string FormatMinor(int amountMinor)
+    {
+        return FormatPrice(amountMinor / 100m);
+    }
+
+    public static int ToMinorUnits(decimal amountMajor)
+    {
+        return (int)System.Math.Round(amountMajor * 100m);
+    }
+
     public static bool IsValidTipInput(string input)
     {
         if (string.IsNullOrEmpty(input)) return true;

@@ -9,6 +9,7 @@ public partial class ProductItem : ObservableObject
 {
     public int Id { get; }
     public string Name { get; }
+    public string Emoji { get; }
     public decimal Price { get; }
     public string FormattedPrice { get; }
 
@@ -20,10 +21,11 @@ public partial class ProductItem : ObservableObject
     public string QuantityText => $"x{Quantity}";
     public Visibility QuantityVisibility => Quantity > 0 ? Visibility.Visible : Visibility.Collapsed;
 
-    public ProductItem(int id, string name, decimal price)
+    public ProductItem(int id, string name, decimal price, string emoji)
     {
         Id = id;
         Name = name;
+        Emoji = emoji;
         Price = price;
         FormattedPrice = PriceUtils.FormatPrice(price);
     }

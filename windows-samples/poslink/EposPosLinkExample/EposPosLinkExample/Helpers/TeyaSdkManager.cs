@@ -11,6 +11,20 @@ namespace EposPosLinkExample.Helpers
 {
     internal class TeyaSdkManager
     {
+        public static TeyaSdkManager Instance { get; } = new();
+
+        public bool IsReady { get; private set; }
+
+        public event EventHandler? ReadyChanged;
+
+        public event EventHandler<TabEventArgs>? TabEventReceived;
+
+        private void SetReady(bool ready)
+        {
+            IsReady = ready;
+            ReadyChanged?.Invoke(this, System.EventArgs.Empty);
+        }
+
         private Process? _process;
         private Dictionary<string, TaskCompletionSource<JsonElement>> _pendingRequests = new Dictionary<string, TaskCompletionSource<JsonElement>>();
 
@@ -51,7 +65,13 @@ namespace EposPosLinkExample.Helpers
 
         public async Task<JsonElement> Setup()
         {
-            return await SendRequestAsync("setup");
+            var result = await SendRequestAsync("setup");
+
+            bool success = result.TryGetProperty("response", out JsonElement response)
+                           && response.GetString() == "SUCCESS";
+            SetReady(success);
+
+            return result;
         }
 
         public async Task<JsonElement> ClearUserAuth()
@@ -83,6 +103,114 @@ namespace EposPosLinkExample.Helpers
         public async Task<JsonElement> PrintCustomTemplate(PrintTemplate template)
         {
             return await SendRequestAsync("printCustomTemplate", template);
+        }
+
+        public async Task<bool> SetPayAtTableEnabledOnStore(bool enable)
+        {
+            var parameters = new
+            {
+                enable
+            };
+
+            var result = await SendRequestAsync("setPayAtTableEnabledOnStore", parameters);
+            bool success = !result.TryGetProperty("failureReason", out var reason) || reason.ValueKind == JsonValueKind.Null;
+            return success;
+        }
+
+        public async Task<Models.Tabs.Tab> OpenTab(string tabId, string tabName, string currency)
+        {
+            var parameters = new
+            {
+                tabId,
+                tabName,
+                currency
+            };
+
+            var result = await SendRequestAsync("openTab", parameters);
+            return JsonSerializer.Deserialize<Models.Tabs.Tab>(result.GetProperty("tab"))
+                ?? throw new InvalidOperationException("Failed to deserialize tab response");
+        }
+
+        public async Task<IReadOnlyList<Models.Tabs.TabSummary>> ListTabs()
+        {
+            var parameters = new
+            {
+                after = (string?)null,
+                before = (string?)null,
+                limit = 100
+            };
+
+            var result = await SendRequestAsync("listTabs", parameters);
+            return JsonSerializer.Deserialize<List<Models.Tabs.TabSummary>>(result.GetProperty("page").GetProperty("items"))
+                ?? throw new InvalidOperationException("Failed to deserialize listTabs response");
+        }
+
+        public async Task<Models.Tabs.Tab> GetTab(string tabId)
+        {
+            var parameters = new
+            {
+                tabId
+            };
+
+            var result = await SendRequestAsync("getTab", parameters);
+            return JsonSerializer.Deserialize<Models.Tabs.Tab>(result.GetProperty("tab"))
+                ?? throw new InvalidOperationException("Failed to deserialize tab response");
+        }
+
+        public async Task<JsonElement> CloseTab(string tabId)
+        {
+            var parameters = new
+            {
+                tabId
+            };
+
+            return await SendRequestAsync("closeTab", parameters);
+        }
+
+        public async Task RespondToBillRequest(string tabId, string terminalId, int totalAmountMinor, string currency, PrintTemplate printModel)
+        {
+            var parameters = new
+            {
+                tabId,
+                terminalId,
+                totalAmount = totalAmountMinor,
+                currency,
+                printModel = printModel.Rows
+            };
+
+            await SendRequestAsync("respondToBillRequest", parameters);
+        }
+
+        public async Task<JsonElement> MakeTabPayment(string tabId, string terminalId, int amount, string currency, string type, string method, int? tip = null)
+        {
+            var transactionId = $"tx-{Guid.NewGuid()}";
+            var parameters = new
+            {
+                transactionId,
+                amount,
+                currency,
+                useTeyaDefaultUi = false,
+                tip,
+                tabContext = new
+                {
+                    tabId,
+                    terminalId,
+                    type,
+                    method
+                }
+            };
+
+            return await SendRequestAsync("makePaymentAndSubscribe", parameters);
+        }
+
+        public async Task<JsonElement> SubscribeToTabEvents()
+        {
+            return await SendRequestAsync("subscribeTabEvents");
+        }
+
+        public async Task<JsonElement> UnsubscribeFromTabEvents()
+        {
+            return await SendRequestAsync("unsubscribeTabEvents");
         }
 
         private async Task<JsonElement> SendRequestAsync(string methodName, object? parameters = null)
@@ -151,8 +279,7 @@ namespace EposPosLinkExample.Helpers
 
             if (!root.TryGetProperty("id", out JsonElement idElement))
             {
-                // This might be a notification, not a response to a request
-                Debug.WriteLine($"Received notification: {responseJson}");
+                ProcessNotification(root);
                 return;
             }
 
@@ -188,6 +315,31 @@ namespace EposPosLinkExample.Helpers
             }
         }
 
+        private void ProcessNotification(JsonElement root)
+        {
+            if (!root.TryGetProperty("result", out var result))
+            {
+                Debug.WriteLine($"Received notification without result: {root}");
+                return;
+            }
+
+            if (!result.TryGetProperty("type", out var typeElement))
+            {
+                Debug.WriteLine($"Received notification without type: {root}");
+                return;
+            }
+
+            var type = typeElement.GetString();
+            if (type == null) return;
+
+            // Extract event name from "subscribeTabEvents->onPayRequested" format
+            var arrowIndex = type.IndexOf("->");
+            var eventName = arrowIndex >= 0 ? type.Substring(arrowIndex + 2) : type;
+
+            Debug.WriteLine($"Tab event: {eventName}");
+            TabEventReceived?.Invoke(this, new TabEventArgs(eventName, result));
+        }
+
         private bool MatchSignatureCertificate(string exePath, string cerFilePath)
         {
             try
@@ -209,6 +361,18 @@ namespace EposPosLinkExample.Helpers
                 Console.WriteLine($"Error verifying signature: {ex.Message}");
                 return false;
             }
+        }
+    }
+
+    internal class TabEventArgs : EventArgs
+    {
+        public string Method { get; }
+        public JsonElement Params { get; }
+
+        public TabEventArgs(string method, JsonElement parameters)
+        {
+            Method = method;
+            Params = parameters;
         }
     }
 }
