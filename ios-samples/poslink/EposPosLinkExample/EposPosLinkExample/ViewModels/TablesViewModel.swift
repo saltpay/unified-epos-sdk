@@ -3,7 +3,7 @@ import TeyaUnifiedEposSDK
 
 @Observable
 final class TablesViewModel {
-
+    
     // ---- UI state ----
     private(set) var patEnabled: Bool = UserDefaults.standard.bool(forKey: Keys.patEnabled)
     private(set) var tabNameInput: String = ""
@@ -14,37 +14,37 @@ final class TablesViewModel {
     var showAddTableDialog: Bool = false
     var showProductCatalogue: Bool = false
     var showPaymentsDialog: Bool = false
-
+    
     var canOpenTab: Bool { !tabNameInput.trimmingCharacters(in: .whitespaces).isEmpty }
-
+    
     var selectedTabItems: [Product] {
         guard let id = selectedTabId?.value else { return [] }
         return itemsByTab[id] ?? []
     }
-
+    
     var selectedTab: TeyaTabSummary? {
         guard let id = selectedTabId?.value else { return nil }
         return openTabs.first { $0.tabId.value == id }
     }
-
+    
     @ObservationIgnored private var listener: TabEventListenerImpl!
     @ObservationIgnored private var closingTabs: Set<String> = []
-
+    
     init() {
         listener = TabEventListenerImpl(viewModel: self)
         TeyaService.shared.subscribeToTabEvents(listener)
         getTabs()
     }
-
+    
     deinit {
         TeyaService.shared.unsubscribeFromTabEvents(listener)
     }
-
+    
     func tabTotalMinor(_ tabIdValue: String) -> Int {
         let items = itemsByTab[tabIdValue] ?? []
         return items.reduce(0) { $0 + PriceUtils.toMinorUnits($1.price * Double($1.quantity)) }
     }
-
+    
     func setPayAtTableEnabled(_ enable: Bool) {
         TeyaService.shared.setPayAtTableEnabled(
             enable,
@@ -56,7 +56,7 @@ final class TablesViewModel {
             onFailure: { print("setPayAtTableEnabled failed") }
         )
     }
-
+    
     func addProduct(_ product: Product) {
         guard let id = selectedTabId?.value else { return }
         var items = itemsByTab[id] ?? []
@@ -69,7 +69,7 @@ final class TablesViewModel {
         }
         itemsByTab[id] = items
     }
-
+    
     func removeProduct(_ product: Product) {
         guard let id = selectedTabId?.value else { return }
         var items = itemsByTab[id] ?? []
@@ -81,36 +81,36 @@ final class TablesViewModel {
         }
         itemsByTab[id] = items
     }
-
+    
     func updateTabName(_ value: String) { tabNameInput = value }
-
+    
     func showAddTable() {
         tabNameInput = ""
         showAddTableDialog = true
     }
-
+    
     func dismissAddTable() {
         showAddTableDialog = false
         tabNameInput = ""
     }
-
+    
     func openTableDetails(_ tabId: TeyaTabId) {
         selectedTabId = tabId
         selectedTabDetail = nil
         refreshSelectedTabDetail()
     }
-
+    
     func closeTableDetails() {
         selectedTabId = nil
         selectedTabDetail = nil
         showProductCatalogue = false
         showPaymentsDialog = false
     }
-
+    
     func refreshSelectedTabDetail() {
         if let id = selectedTabId { refreshTab(id) }
     }
-
+    
     func getTabs() {
         TeyaService.shared.listTabs(
             onSuccess: { [weak self] page in
@@ -120,7 +120,7 @@ final class TablesViewModel {
             onFailure: { print("listTabs failed") }
         )
     }
-
+    
     func openTab() {
         guard canOpenTab else { return }
         let tabId = "tab-\(Int(Date().timeIntervalSince1970 * 1000))"
@@ -131,14 +131,13 @@ final class TablesViewModel {
                 guard let self else { return }
                 self.itemsByTab[tab.tabId.value] = []
                 self.openTabs = self.upsert(tab.toSummary())
-                self.tabNameInput = ""
-                self.showAddTableDialog = false
+                dismissAddTable()
                 print("openTab(\(tab.tabId.value), '\(tab.tabName)') success")
             },
             onFailure: { print("openTab failed") }
         )
     }
-
+    
     func closeTab(_ tabId: TeyaTabId) {
         TeyaService.shared.closeTab(
             tabId,
@@ -156,7 +155,7 @@ final class TablesViewModel {
             }
         )
     }
-
+    
     private func refreshTab(_ tabId: TeyaTabId) {
         TeyaService.shared.getTab(
             tabId,
@@ -172,14 +171,14 @@ final class TablesViewModel {
             onFailure: { print("getTab failed") }
         )
     }
-
+    
     private func autoCloseCompletedTab(_ tabId: TeyaTabId) {
         guard !closingTabs.contains(tabId.value) else { return }
         closingTabs.insert(tabId.value)
         print("Tab \(tabId.value) fully paid (COMPLETED) -> closing")
         closeTab(tabId)
     }
-
+    
     private func upsert(_ tab: TeyaTabSummary) -> [TeyaTabSummary] {
         if tab.status == TeyaTabStatus.closed { return remove(tab.tabId) }
         var tabs = openTabs
@@ -190,11 +189,11 @@ final class TablesViewModel {
         }
         return tabs
     }
-
+    
     private func remove(_ tabId: TeyaTabId) -> [TeyaTabSummary] {
         openTabs.filter { $0.tabId.value != tabId.value }
     }
-
+    
     func handleShowBillRequested(_ request: TeyaTabBillRequest) {
         if let tab = openTabs.first(where: { $0.tabId.value == request.tabId.value }) {
             respondToBill(tab: tab, terminalId: request.terminalId)
@@ -211,7 +210,7 @@ final class TablesViewModel {
             )
         }
     }
-
+    
     private func respondToBill(tab: TeyaTabSummary, terminalId: String) {
         TeyaService.shared.respondToBillRequest(
             tab: tab,
@@ -225,7 +224,7 @@ final class TablesViewModel {
             onFailure: { print("respondToBillRequest failed") }
         )
     }
-
+    
     func handlePayRequested(_ request: TeyaTabPayRequest) {
         TeyaService.shared.makeTabPayment(
             tabContext: request.tabContext,
@@ -234,15 +233,27 @@ final class TablesViewModel {
         )
         refreshTab(request.tabContext.tabId)
     }
-
+    
     func handlePaymentUpdate(_ tabId: TeyaTabId) {
         refreshTab(tabId)
     }
-
+    
     func handleTabCompleted(_ tabId: TeyaTabId) {
         refreshTab(tabId)
     }
 
+    func handleBillHidden(_ tabId: TeyaTabId) {
+        refreshTab(tabId)
+    }
+
+    func handleTabPaused(_ tabId: TeyaTabId) {
+        refreshTab(tabId)
+    }
+
+    func handleTabResumed(_ tabId: TeyaTabId) {
+        refreshTab(tabId)
+    }
+    
     private enum Keys {
         static let patEnabled = "pat_enabled"
     }
@@ -263,57 +274,61 @@ private extension TeyaTab {
     }
 }
 
-final class TabEventListenerImpl: TeyaTabEventListener {
+nonisolated final class TabEventListenerImpl: TeyaTabEventListener {
     private weak var viewModel: TablesViewModel?
-
+    
     init(viewModel: TablesViewModel) {
         self.viewModel = viewModel
     }
-
+    
+    private func onMain(_ body: @MainActor (TablesViewModel) -> Void) {
+        MainActor.assumeIsolated { if let viewModel { body(viewModel) } }
+    }
+    
     func onShowBillRequested(request: TeyaTabBillRequest) {
         print("onShowBillRequested(tab=\(request.tabId.value), terminal=\(request.terminalId))")
-        DispatchQueue.main.async { self.viewModel?.handleShowBillRequested(request) }
+        onMain { $0.handleShowBillRequested(request) }
     }
-
+    
     func onPayRequested(request: TeyaTabPayRequest) {
         print("onPayRequested(tab=\(request.tabContext.tabId.value), type=\(request.tabContext.type), amount=\(request.amount) \(request.currency))")
-        DispatchQueue.main.async { self.viewModel?.handlePayRequested(request) }
+        onMain { $0.handlePayRequested(request) }
     }
-
+    
     func onPaymentProgress(detail: TeyaTabPaymentDetail) {
         print("onPaymentProgress(tab=\(detail.tabId.value), status=\(detail.status))")
-        DispatchQueue.main.async { self.viewModel?.handlePaymentUpdate(detail.tabId) }
+        onMain { $0.handlePaymentUpdate(detail.tabId) }
     }
-
+    
     func onPaymentCompleted(detail: TeyaTabPaymentDetail) {
         print("onPaymentCompleted(tab=\(detail.tabId.value), status=\(detail.status), amount=\(detail.amount))")
-        DispatchQueue.main.async { self.viewModel?.handlePaymentUpdate(detail.tabId) }
+        onMain { $0.handlePaymentUpdate(detail.tabId) }
     }
-
+    
     func onTabPaused(tabId: TeyaTabId) {
         print("onTabPaused(tab=\(tabId.value))")
-        DispatchQueue.main.async { self.viewModel?.handlePaymentUpdate(tabId) }
+        onMain { $0.handleTabPaused(tabId) }
     }
 
     func onTabResumed(tabId: TeyaTabId) {
         print("onTabResumed(tab=\(tabId.value))")
-        DispatchQueue.main.async { self.viewModel?.handlePaymentUpdate(tabId) }
+        onMain { $0.handleTabResumed(tabId) }
     }
-
+    
     func onTabCompleted(completion: TeyaTabCompletion) {
         print("onTabCompleted(tab=\(completion.tabId.value), totalPaid=\(completion.totalPaid))")
-        DispatchQueue.main.async { self.viewModel?.handleTabCompleted(completion.tabId) }
+        onMain { $0.handleTabCompleted(completion.tabId) }
     }
-
+    
     func onBillHidden(tabId: TeyaTabId) {
         print("onBillHidden(tab=\(tabId.value))")
-        DispatchQueue.main.async { self.viewModel?.handlePaymentUpdate(tabId) }
+        onMain { $0.handleBillHidden(tabId) }
     }
-
+    
     func onConnectionStateChange(state: TeyaTabConnectionState) {
         print("onConnectionStateChange(\(state))")
     }
-
+    
     func onUnsubscribed() {
         print("onUnsubscribed")
     }

@@ -71,91 +71,14 @@ final class TeyaService {
     }
     
     func printReceipt(products: [Product], tip: Double) {
-        let template = buildCustomPrintTemplate(products: products, tip: tip)
+        let template = PrintUtils.buildCustomPrintTemplate(products: products, tip: tip)
         teyaPosLinkSDK.printingApi.printCustomTemplate(template: template).subscribe(
             printingListener: PrintingStatusSubscriptionListener()
         )
     }
     
-    private func buildCustomPrintTemplate(products: [Product], tip: Double) -> TeyaTemplate {
-        let df = DateFormatter()
-        df.dateFormat = "dd/MM/yy · HH:mm"
-        let nowText = df.string(from: Date())
-        
-        let subtotal = products.reduce(0.0) { $0 + $1.price * Double($1.quantity) }
-        let total = subtotal + tip
-        
-        var rows: [TeyaReceiptRow] = []
-
-        rows.append(
-            TeyaReceiptRowItems(
-                items: [
-                    TeyaRowElementText(text: "CUSTOMER RECEIPT", bold: true, align: TeyaAlign.left),
-                    TeyaRowElementText(text: nowText, bold: true, align: TeyaAlign.right),
-                ]
-            )
-        )
-        
-        rows.append(TeyaReceiptRowSpacer.shared)
-        rows.append(TeyaReceiptRowDivider.shared)
-
-        for product in products {
-            rows.append(
-                TeyaReceiptRowItems(
-                    items: [
-                        TeyaRowElementText(
-                            text: "\(product.quantity)x \(product.name.uppercased())",
-                            bold: true,
-                            align: TeyaAlign.left
-                        ),
-                        TeyaRowElementText(
-                            text: PriceUtils.formatPrice(product.price * Double(product.quantity)),
-                            bold: true,
-                            align: TeyaAlign.right
-                        ),
-                    ]
-                )
-            )
-        }
-        
-        rows.append(TeyaReceiptRowDivider.shared)
-
-        rows.append(
-            TeyaReceiptRowItems(
-                items: [
-                    TeyaRowElementText(text: "TIP", bold: true, align: TeyaAlign.left),
-                    TeyaRowElementText(text: PriceUtils.formatPrice(tip), bold: true, align: TeyaAlign.right),
-                ]
-            )
-        )
-
-        rows.append(
-            TeyaReceiptRowItems(
-                items: [
-                    TeyaRowElementText(text: "TOTAL", bold: true, align: TeyaAlign.left),
-                    TeyaRowElementText(text: PriceUtils.formatPrice(total), bold: true, align: TeyaAlign.right),
-                ]
-            )
-        )
-        
-        rows.append(
-            TeyaReceiptRowItem(item: TeyaRowElementQrCode(url: "https://teya.com", align: TeyaAlign.center))
-        )
-        
-        rows.append(TeyaReceiptRowSpacer.shared)
-        rows.append(TeyaReceiptRowSpacer.shared)
-        
-        rows.append(
-            TeyaReceiptRowItem(
-                item: TeyaRowElementText(text: "Thank you", bold: true, align: TeyaAlign.center)
-            )
-        )
-        
-        return TeyaTemplate(rows: rows)
-    }
-
     // ---- Pay at Table ----
-
+    
     /// Enables or disables Pay at Table for the linked store.
     func setPayAtTableEnabled(
         _ enable: Bool,
@@ -171,7 +94,7 @@ final class TeyaService {
             }
         )
     }
-
+    
     func openTab(
         tabId: String,
         tabName: String,
@@ -189,7 +112,7 @@ final class TeyaService {
             }
         )
     }
-
+    
     func listTabs(
         onSuccess: @escaping (TeyaTabPage) -> Void,
         onFailure: @escaping () -> Void
@@ -206,7 +129,7 @@ final class TeyaService {
             }
         )
     }
-
+    
     func getTab(
         _ tabId: TeyaTabId,
         onSuccess: @escaping (TeyaTab) -> Void,
@@ -221,7 +144,7 @@ final class TeyaService {
             }
         )
     }
-
+    
     func closeTab(
         _ tabId: TeyaTabId,
         onSuccess: @escaping () -> Void,
@@ -236,7 +159,7 @@ final class TeyaService {
             }
         )
     }
-
+    
     /// Responds to a SHOW_BILL_REQUEST by sending the bill back to the requesting terminal.
     func respondToBillRequest(
         tab: TeyaTabSummary,
@@ -251,7 +174,7 @@ final class TeyaService {
             terminalId: terminalId,
             totalAmount: totalAmountMinor,
             currency: PriceUtils.currencyCode,
-            printModel: buildTableBillTemplate(tab: tab, items: billItems, totalMinor: Int(totalAmountMinor)),
+            printModel: PrintUtils.buildTableBillTemplate(tab: tab, items: billItems, totalMinor: Int(totalAmountMinor)),
             billImage: nil,
             onSuccess: onSuccess,
             onFailure: { failure in
@@ -260,7 +183,7 @@ final class TeyaService {
             }
         )
     }
-
+    
     /// Responds to a PAY_REQUEST by starting a tab-tagged payment and logging its state.
     func makeTabPayment(tabContext: TeyaTabPaymentContext, amount: Int32, currency: String) {
         let subscription = teyaPosLinkSDK.transactionsApi.makePayment(
@@ -273,69 +196,25 @@ final class TeyaService {
         )
         subscription.subscribe(listener: PaymentStateChangeListener())
     }
-
+    
     func subscribeToTabEvents(_ listener: TeyaTabEventListener) {
         teyaPosLinkSDK.tabsApi.tabEvents.subscribe(tabEventListener: listener)
     }
-
+    
     func unsubscribeFromTabEvents(_ listener: TeyaTabEventListener) {
         teyaPosLinkSDK.tabsApi.tabEvents.unsubscribe(tabEventListener: listener)
     }
-
-    private func buildTableBillTemplate(tab: TeyaTabSummary, items: [Product], totalMinor: Int) -> TeyaTemplate {
-        var rows: [TeyaReceiptRow] = []
-
-        rows.append(
-            TeyaReceiptRowItem(item: TeyaRowElementText(text: "BILL", bold: true, align: TeyaAlign.center))
-        )
-        rows.append(
-            TeyaReceiptRowItem(item: TeyaRowElementText(text: tab.tabName, bold: false, align: TeyaAlign.center))
-        )
-        rows.append(TeyaReceiptRowSpacer.shared)
-        rows.append(TeyaReceiptRowDivider.shared)
-
-        for product in items {
-            rows.append(
-                TeyaReceiptRowItems(
-                    items: [
-                        TeyaRowElementText(
-                            text: "\(product.quantity)x \(product.name.uppercased())",
-                            bold: false,
-                            align: TeyaAlign.left
-                        ),
-                        TeyaRowElementText(
-                            text: PriceUtils.formatPrice(product.price * Double(product.quantity)),
-                            bold: false,
-                            align: TeyaAlign.right
-                        ),
-                    ]
-                )
-            )
+    
+    private class PaymentStateChangeListener: TeyaPaymentStateChangeListener {
+        func onPaymentStateChanged(state: TeyaPaymentStateDetails) {
+            print("Payment state changed: \(state)")
         }
-
-        rows.append(TeyaReceiptRowDivider.shared)
-        rows.append(
-            TeyaReceiptRowItems(
-                items: [
-                    TeyaRowElementText(text: "TOTAL", bold: true, align: TeyaAlign.left),
-                    TeyaRowElementText(text: PriceUtils.formatMinor(totalMinor), bold: true, align: TeyaAlign.right),
-                ]
-            )
-        )
-
-        return TeyaTemplate(rows: rows)
     }
-}
-
-private class PaymentStateChangeListener: TeyaPaymentStateChangeListener {
-    func onPaymentStateChanged(state: TeyaPaymentStateDetails) {
-        print("Payment state changed: \(state)")
-    }
-}
-
-private final class PrintingStatusSubscriptionListener: TeyaPrintingStatusSubscriptionListener {
-    func onPrintingStateChanged(printStateDetails: TeyaPrintStateDetails) {
-        print("Printing state changed: \(printStateDetails)")
+    
+    private final class PrintingStatusSubscriptionListener: TeyaPrintingStatusSubscriptionListener {
+        func onPrintingStateChanged(printStateDetails: TeyaPrintStateDetails) {
+            print("Printing state changed: \(printStateDetails)")
+        }
     }
 }
 

@@ -37,11 +37,13 @@ struct TableDetailsView: View {
                         type: .subtle,
                         size: .large
                     )
+                    .fixedSize(horizontal: true, vertical: false)
                     LemonadeUi.Button(
                         label: "Add items",
                         onClick: { viewModel.showProductCatalogue = true },
                         size: .large
                     )
+                    .fixedSize(horizontal: true, vertical: false)
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 16)
@@ -212,6 +214,7 @@ private struct PaymentsSummary: View {
                         type: .ghost,
                         size: .small
                     )
+                    .fixedSize(horizontal: true, vertical: false)
                 }
             }
         }
