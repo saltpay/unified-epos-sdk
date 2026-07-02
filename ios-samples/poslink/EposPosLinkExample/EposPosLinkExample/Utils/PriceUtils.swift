@@ -19,9 +19,18 @@ enum PriceUtils {
         priceFormatter.string(from: NSNumber(value: amount)) ?? "£0.00"
     }
 
+    /// Formats an amount given in minor units (e.g. pence) as a currency string, e.g. 1500 -> "£15.00".
+    static func formatMinor(_ amountMinor: Int) -> String {
+        formatPrice(Double(amountMinor) / 100.0)
+    }
+
+    /// Converts a major-unit amount (e.g. 1.29) to integer minor units (e.g. 129).
+    static func toMinorUnits(_ amountMajor: Double) -> Int {
+        Int((amountMajor * 100).rounded())
+    }
+
     static func isValidTipInput(_ input: String) -> Bool {
         if input.isEmpty { return true }
-        // Accept both '.' and ',' as decimal separator
         let normalized = input.replacingOccurrences(of: ",", with: ".")
         let dotIndex = normalized.firstIndex(of: ".")
         if dotIndex != normalized.lastIndex(of: ".") { return false }

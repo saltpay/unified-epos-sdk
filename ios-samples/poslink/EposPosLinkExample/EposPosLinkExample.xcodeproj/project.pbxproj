@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		4F5D42B72F3A0EF9008DAF8A /* TeyaUnifiedEposSDK in Frameworks */ = {isa = PBXBuildFile; productRef = 4F5D42B62F3A0EF9008DAF8A /* TeyaUnifiedEposSDK */; };
+		AA00000000000000000000B1 /* Lemonade in Frameworks */ = {isa = PBXBuildFile; productRef = AA00000000000000000000B2 /* Lemonade */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -15,7 +16,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		4F75E3EB2F3B5108005514F0 /* Exceptions for "EposPoslinkExample" folder in "EposPoslinkExample" target */ = {
+		4F75E3EB2F3B5108005514F0 /* Exceptions for "EposPosLinkExample" folder in "EposPoslinkExample" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -25,12 +26,12 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		4F5D42922F3A070C008DAF8A /* EposPoslinkExample */ = {
+		4F5D42922F3A070C008DAF8A /* EposPosLinkExample */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				4F75E3EB2F3B5108005514F0 /* Exceptions for "EposPoslinkExample" folder in "EposPoslinkExample" target */,
+				4F75E3EB2F3B5108005514F0 /* Exceptions for "EposPosLinkExample" folder in "EposPoslinkExample" target */,
 			);
-			path = EposPoslinkExample;
+			path = EposPosLinkExample;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -41,6 +42,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4F5D42B72F3A0EF9008DAF8A /* TeyaUnifiedEposSDK in Frameworks */,
+				AA00000000000000000000B1 /* Lemonade in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -50,7 +52,7 @@
 		4F5D42872F3A070C008DAF8A = {
 			isa = PBXGroup;
 			children = (
-				4F5D42922F3A070C008DAF8A /* EposPoslinkExample */,
+				4F5D42922F3A070C008DAF8A /* EposPosLinkExample */,
 				4F5D42912F3A070C008DAF8A /* Products */,
 			);
 			sourceTree = "<group>";
@@ -80,11 +82,12 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				4F5D42922F3A070C008DAF8A /* EposPoslinkExample */,
+				4F5D42922F3A070C008DAF8A /* EposPosLinkExample */,
 			);
 			name = EposPoslinkExample;
 			packageProductDependencies = (
 				4F5D42B62F3A0EF9008DAF8A /* TeyaUnifiedEposSDK */,
+				AA00000000000000000000B2 /* Lemonade */,
 			);
 			productName = EposPoslinkExample;
 			productReference = 4F5D42902F3A070C008DAF8A /* EposPoslinkExample.app */;
@@ -116,6 +119,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				4F5D42B52F3A0EF9008DAF8A /* XCRemoteSwiftPackageReference "teya-unified-epos-sdk-pod-spm" */,
+				AA00000000000000000000B5 /* XCRemoteSwiftPackageReference "lemonade-design-system" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 4F5D42912F3A070C008DAF8A /* Products */;
@@ -294,7 +298,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = EposPoslinkExample/Info.plist;
+				INFOPLIST_FILE = EposPosLinkExample/Info.plist;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -337,7 +341,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = EposPoslinkExample/Info.plist;
+				INFOPLIST_FILE = EposPosLinkExample/Info.plist;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -398,7 +402,15 @@
 			repositoryURL = "https://github.com/saltpay/teya-unified-epos-sdk-pod-spm";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.5.0;
+				minimumVersion = 1.6.0;
+			};
+		};
+		AA00000000000000000000B5 /* XCRemoteSwiftPackageReference "lemonade-design-system" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/saltpay/lemonade-design-system.git";
+			requirement = {
+				kind = upToNextMinorVersion;
+				minimumVersion = 0.16.3;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -408,6 +420,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 4F5D42B52F3A0EF9008DAF8A /* XCRemoteSwiftPackageReference "teya-unified-epos-sdk-pod-spm" */;
 			productName = TeyaUnifiedEposSDK;
+		};
+		AA00000000000000000000B2 /* Lemonade */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AA00000000000000000000B5 /* XCRemoteSwiftPackageReference "lemonade-design-system" */;
+			productName = Lemonade;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

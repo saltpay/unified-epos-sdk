@@ -1,4 +1,5 @@
 import SwiftUI
+import Lemonade
 
 struct MainView: View {
     @State private var viewModel = MainViewModel()
@@ -23,9 +24,7 @@ struct MainView: View {
                     payEnabled: viewModel.payEnabled
                 )
             }
-            .navigationTitle("ePOS Sample Poslink")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+            .lemonadeTopBar(label: "ePOS Sample Poslink") {
                 TopBar(
                     onClearUserAuth: { viewModel.clearUserAuth() },
                     onClearDeviceLink: { viewModel.clearDeviceLink() }
@@ -42,9 +41,6 @@ struct MainView: View {
                     }
                 }
             }
-        }
-        .onAppear {
-            TeyaService.shared.setUp()
         }
     }
 }
