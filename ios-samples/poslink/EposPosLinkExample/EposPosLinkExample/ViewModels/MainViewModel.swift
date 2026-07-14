@@ -4,6 +4,7 @@ import Foundation
 final class MainViewModel {
     var basket: [Product] = []
     var tipInput: String = ""
+    var unreferencedRefund: Bool = false
 
     var tipAmount: Double {
         Double(tipInput.replacingOccurrences(of: ",", with: ".")) ?? 0.0
@@ -48,10 +49,18 @@ final class MainViewModel {
         tipInput = value
     }
 
+    func updateUnreferencedRefund(_ value: Bool) {
+        unreferencedRefund = value
+    }
+
     func pay() {
         let totalInMinorUnits = Int32((total * 100).rounded())
-        let tipInMinorUnits = Int32((tipAmount * 100).rounded())
-        TeyaService.shared.makePayment(totalMinorUnits: totalInMinorUnits, tipMinorUnits: tipInMinorUnits)
+        if unreferencedRefund {
+            TeyaService.shared.makeUnreferencedRefund(amountMinorUnits: totalInMinorUnits)
+        } else {
+            let tipInMinorUnits = Int32((tipAmount * 100).rounded())
+            TeyaService.shared.makePayment(totalMinorUnits: totalInMinorUnits, tipMinorUnits: tipInMinorUnits)
+        }
     }
 
     func printReceipt() {

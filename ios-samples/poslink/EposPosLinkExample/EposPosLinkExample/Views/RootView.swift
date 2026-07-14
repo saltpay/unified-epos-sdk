@@ -8,6 +8,7 @@ struct RootView: View {
     private let tabs: [LemonadeTabButtonProperties] = [
         .labelAndIcon("Sale", icon: .basket),
         .labelAndIcon("Pay at Table", icon: .forkKnife),
+        .labelAndIcon("History", icon: .receipt),
     ]
 
     var body: some View {
@@ -20,6 +21,10 @@ struct RootView: View {
                 TablesView(viewModel: tablesViewModel)
                     .opacity(selectedTab == 1 ? 1 : 0)
                     .allowsHitTesting(selectedTab == 1)
+
+                TransactionHistoryView()
+                    .opacity(selectedTab == 2 ? 1 : 0)
+                    .allowsHitTesting(selectedTab == 2)
             }
 
             Divider()

@@ -59,12 +59,65 @@ final class TeyaService {
             purchaseData: nil
         )
         
-        paymentSubscription.subscribe(listener: PaymentStateChangeListener())
+        paymentSubscription.subscribe(listener: PaymentStateChangeListener(type: .payment))
         paymentSubscription.subscribe(
             listener: TeyaPosLinkInProgressUiKt.create(
                 autoDismissOnFinalStateAfterMs: 2000, // Time in ms before the UI auto-dismisses after a final state
                 onDismiss: { state in // Optional callback invoked after dismissing the UI with the current PaymentStateDetails.
                     print("Payment UI dismissed with payment state details: \(state)")
+                }
+            )
+        )
+    }
+
+    // ---- Refund ----
+
+    func refundPayment(
+        gatewayPaymentId: String,
+        amountMinor: Int32,
+        currency: String,
+        onSettled: @escaping () -> Void
+    ) {
+        let refundSubscription = teyaPosLinkSDK.transactionsApi.refundPayment(
+            paymentId: TeyaGatewayPaymentId(id: gatewayPaymentId),
+            amount: amountMinor,
+            currency: currency,
+            allocatedLineItems: nil
+        )
+        refundSubscription.subscribe(refundListener: RefundResultListener { refundResult in
+            print("Refund result: \(refundResult)")
+            TransactionStore.shared.upsert(
+                TransactionRecord(
+                    id: refundResult.gatewayRefundId?.id ?? UUID().uuidString,
+                    type: .refund,
+                    isSuccess: refundResult.result == TeyaRefundResult.success,
+                    statusLabel: refundResult.result.name,
+                    amountMinor: Int(amountMinor),
+                    currency: currency,
+                    gatewayPaymentId: nil,
+                    timestamp: Int64(Date().timeIntervalSince1970 * 1000)
+                )
+            )
+            if refundResult.result == TeyaRefundResult.success {
+                TransactionStore.shared.markRefunded(gatewayPaymentId: gatewayPaymentId)
+            }
+            onSettled()
+        })
+    }
+
+    func makeUnreferencedRefund(amountMinorUnits: Int32) {
+        let refundSubscription = teyaPosLinkSDK.transactionsApi.makeUnreferencedRefund(
+            transactionId: UUID().uuidString,
+            amount: amountMinorUnits,
+            currency: PriceUtils.currencyCode
+        )
+
+        refundSubscription.subscribe(listener: PaymentStateChangeListener(type: .refund))
+        refundSubscription.subscribe(
+            listener: TeyaPosLinkInProgressUiKt.create(
+                autoDismissOnFinalStateAfterMs: 2000,
+                onDismiss: { state in
+                    print("Unreferenced refund UI dismissed with payment state details: \(state)")
                 }
             )
         )
@@ -194,9 +247,9 @@ final class TeyaService {
             purchaseData: nil,
             tabContext: tabContext
         )
-        subscription.subscribe(listener: PaymentStateChangeListener())
+        subscription.subscribe(listener: PaymentStateChangeListener(type: .payment))
     }
-    
+
     func subscribeToTabEvents(_ listener: TeyaTabEventListener) {
         teyaPosLinkSDK.tabsApi.tabEvents.subscribe(tabEventListener: listener)
     }
@@ -206,9 +259,44 @@ final class TeyaService {
     }
     
     private class PaymentStateChangeListener: TeyaPaymentStateChangeListener {
-        func onPaymentStateChanged(state: TeyaPaymentStateDetails) {
-            print("Payment state changed: \(state)")
+        private let type: TeyaTransactionType
+
+        init(type: TeyaTransactionType) {
+            self.type = type
         }
+
+        func onPaymentStateChanged(state: TeyaPaymentStateDetails) {
+            print("Payment state changed: \(state), is it a final state = \(state.isFinal)")
+            TeyaService.recordTransactionIfFinal(state: state, type: type)
+        }
+    }
+
+    private class RefundResultListener: TeyaRefundResultListener {
+        private let onResult: (TeyaRefundResultDetails) -> Void
+
+        init(_ onResult: @escaping (TeyaRefundResultDetails) -> Void) {
+            self.onResult = onResult
+        }
+
+        func onRefundResult(refundResult: TeyaRefundResultDetails) {
+            onResult(refundResult)
+        }
+    }
+
+    private static func recordTransactionIfFinal(state: TeyaPaymentStateDetails, type: TeyaTransactionType) {
+        guard state.isFinal else { return }
+        TransactionStore.shared.upsert(
+            TransactionRecord(
+                id: state.eposTransactionId,
+                type: type,
+                isSuccess: state.gatewayTransactionId != nil,
+                statusLabel: state.state.name,
+                amountMinor: Int(state.amount),
+                currency: state.currency,
+                gatewayPaymentId: state.gatewayPaymentId?.id,
+                timestamp: state.transactionTimestamp?.asInt64 ?? Int64(Date().timeIntervalSince1970 * 1000)
+            )
+        )
     }
     
     private final class PrintingStatusSubscriptionListener: TeyaPrintingStatusSubscriptionListener {
