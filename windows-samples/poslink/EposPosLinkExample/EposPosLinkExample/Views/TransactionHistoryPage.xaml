@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="EposPosLinkExample.Views.TransactionHistoryPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:viewmodels="using:EposPosLinkExample.ViewModels"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Padding="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Transaction History"
+                   Style="{StaticResource TitleTextBlockStyle}" VerticalAlignment="Center"/>
+
+        <TextBlock Grid.Row="1" Text="No transactions yet. Complete a sale to see it here."
+                   Margin="0,24,0,0" HorizontalAlignment="Center" VerticalAlignment="Center"
+                   Foreground="{ThemeResource LemonadeContentSecondaryBrush}"
+                   Visibility="{x:Bind ViewModel.HasNoTransactions, Mode=OneWay}"/>
+
+        <ListView Grid.Row="1" Margin="0,12,0,0"
+                  ItemsSource="{x:Bind ViewModel.Transactions}"
+                  SelectionMode="None">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <Setter Property="Padding" Value="0"/>
+                </Style>
+            </ListView.ItemContainerStyle>
+            <ListView.ItemTemplate>
+                <DataTemplate x:DataType="viewmodels:TransactionItem">
+                    <Grid Padding="4,12,4,12"
+                          BorderBrush="{ThemeResource LemonadeBorderBrush}"
+                          BorderThickness="0,0,0,1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="{x:Bind AmountFormatted}"
+                                           Style="{StaticResource SubtitleTextBlockStyle}"
+                                           VerticalAlignment="Center"/>
+                                <Border Style="{StaticResource LemonadeTagBorderStyle}"
+                                        Background="{Binding Status, Converter={StaticResource StatusToBackground}}">
+                                    <TextBlock Text="{Binding Status, Converter={StaticResource StatusToLabel}}"
+                                               Foreground="{Binding Status, Converter={StaticResource StatusToForeground}}"/>
+                                </Border>
+                            </StackPanel>
+                            <TextBlock Text="{x:Bind TypeLabel}"
+                                       Foreground="{ThemeResource LemonadeContentSecondaryBrush}"/>
+                            <TextBlock Text="{x:Bind TimestampFormatted}"
+                                       Foreground="{ThemeResource LemonadeContentSecondaryBrush}"/>
+                        </StackPanel>
+
+                        <Button Grid.Column="1" VerticalAlignment="Center" Margin="12,0,0,0"
+                                Content="{x:Bind RefundButtonText, Mode=OneWay}"
+                                Command="{x:Bind RefundCommand}"
+                                Visibility="{x:Bind RefundVisibility}"/>
+                    </Grid>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </Grid>
+</Page>

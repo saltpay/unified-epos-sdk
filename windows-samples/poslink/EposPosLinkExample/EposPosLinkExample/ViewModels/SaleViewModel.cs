@@ -36,11 +36,16 @@ public partial class SaleViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(PayButtonText))]
     public partial decimal Subtotal { get; private set; }
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PayButtonText))]
+    public partial bool UnreferencedRefund { get; set; }
+
     public string ItemCountText => $"{ItemCount} item{(ItemCount != 1 ? "s" : "")}";
     public string SubtotalText => $"Subtotal: {PriceUtils.FormatPrice(Subtotal)}";
     public decimal TipAmount => decimal.TryParse(TipInput, NumberStyles.Any, CultureInfo.InvariantCulture, out var v) ? v : 0m;
     public decimal Total => Subtotal + TipAmount;
-    public string PayButtonText => $"Pay {PriceUtils.FormatPrice(Total)}";
+    public string PayButtonText =>
+        UnreferencedRefund ? $"Refund {PriceUtils.FormatPrice(Total)}" : $"Pay {PriceUtils.FormatPrice(Total)}";
     public bool IsPayEnabled => ItemCount > 0 && IsSdkReady;
 
     private readonly TeyaSdkManager _teyaSdkManager = TeyaSdkManager.Instance;
@@ -69,6 +74,23 @@ public partial class SaleViewModel : ObservableObject
     [RelayCommand]
     private async Task Pay()
     {
+        if (UnreferencedRefund)
+        {
+            var refund = await _teyaSdkManager.MakeUnreferencedRefund(
+                id: Guid.NewGuid().ToString(),
+                amount: decimal.ToInt32(Total * 100),
+                currency: "GBP"
+            );
+
+            Debug.WriteLine($"Unreferenced refund response: {refund}");
+
+            if (refund.State == MakePaymentStateChange.PaymentState.SUCCESSFUL)
+            {
+                ClearBasket();
+            }
+            return;
+        }
+
         var response = await _teyaSdkManager.MakePayment(
            id: Guid.NewGuid().ToString(),
            totalAmount: decimal.ToInt32(Total * 100),

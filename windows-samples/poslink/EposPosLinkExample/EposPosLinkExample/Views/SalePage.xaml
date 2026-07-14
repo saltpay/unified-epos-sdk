@@ -74,6 +74,9 @@
                      DataContext="{x:Bind ViewModel}"
                      Text="{Binding TipInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                      BeforeTextChanging="TipInput_BeforeTextChanging"/>
+            <CheckBox Content="Unreferenced refund" Margin="0,8,0,0"
+                      DataContext="{x:Bind ViewModel}"
+                      IsChecked="{Binding UnreferencedRefund, Mode=TwoWay}"/>
             <Grid Margin="0,12,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>

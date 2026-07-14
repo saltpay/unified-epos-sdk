@@ -1,4 +1,5 @@
 using System;
+using EposPosLinkExample.Models;
 using EposPosLinkExample.Models.Tabs;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
@@ -21,6 +22,19 @@ internal static class StatusVoice
         _ => ("Unknown", TagVoice.Neutral),
     };
 
+    public static (string Label, TagVoice Voice) ForTransaction(TransactionRecord record)
+    {
+        // StatusLabel is a raw enum name (a payment PaymentState, or a refund result code).
+        // Reuse ForPayment's friendly labels when it parses; otherwise fall back to IsSuccess.
+        var (label, voice) = Enum.TryParse<PaymentState>(record.StatusLabel, out var state)
+            ? ForPayment(state)
+            : (record.IsSuccess ? "Paid" : "Failed", record.IsSuccess ? TagVoice.Positive : TagVoice.Critical);
+
+        if (record.IsSuccess && record.Type == TransactionType.Refund)
+            return ("Refunded", TagVoice.Info);
+        return (label, voice);
+    }
+
     public static (string Label, TagVoice Voice) ForPayment(PaymentState state) => state switch
     {
         PaymentState.SUCCESSFUL => ("Paid", TagVoice.Positive),
@@ -34,6 +48,7 @@ internal static class StatusVoice
     {
         TabStatus t => ForTab(t),
         PaymentState p => ForPayment(p),
+        TransactionRecord r => ForTransaction(r),
         _ => (value?.ToString() ?? "", TagVoice.Neutral),
     };
 
