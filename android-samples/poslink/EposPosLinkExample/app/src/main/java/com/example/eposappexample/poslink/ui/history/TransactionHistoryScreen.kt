@@ -115,7 +115,7 @@ private fun TransactionRow(
                 TransactionStatusTag(record)
             }
             LemonadeUi.Text(
-                "${transactionTypeLabel(record.type)} • ${record.statusLabel}",
+                transactionTypeLabel(record.type),
                 textStyle = LemonadeTheme.typography.bodyLargeRegular
             )
             LemonadeUi.Text(
@@ -139,12 +139,12 @@ private fun TransactionRow(
 
 @Composable
 private fun TransactionStatusTag(record: TransactionRecord) {
-    val voice = when {
-        record.isSuccess && record.type == TransactionType.Refund -> TagVoice.Info
-        record.isSuccess -> TagVoice.Positive
-        else -> TagVoice.Warning
+    val (voice, label) = when {
+        record.isSuccess && record.type == TransactionType.Refund -> TagVoice.Info to "Refunded"
+        record.isSuccess -> TagVoice.Positive to "Paid"
+        else -> TagVoice.Critical to "Failed"
     }
-    LemonadeUi.Tag(label = record.statusLabel, voice = voice)
+    LemonadeUi.Tag(label = label, voice = voice)
 }
 
 private fun transactionTypeLabel(type: TransactionType): String = when (type) {
@@ -153,4 +153,4 @@ private fun transactionTypeLabel(type: TransactionType): String = when (type) {
 }
 
 private fun formatTimestamp(timestamp: Long): String =
-    SimpleDateFormat("HH:mm • dd MMM yyyy", Locale.UK).format(Date(timestamp))
+    SimpleDateFormat("dd/MM/yy · HH:mm", Locale.getDefault()).format(Date(timestamp))

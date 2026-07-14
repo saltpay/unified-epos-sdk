@@ -6,6 +6,7 @@ import com.example.eposappexample.poslink.models.Product
 import com.example.eposappexample.poslink.transactions.TransactionRecord
 import com.example.eposappexample.poslink.transactions.TransactionStore
 import com.teya.sdkutilities.Logger
+import com.teya.unifiedepossdk.PaymentState
 import com.teya.unifiedepossdk.PaymentStateDetails
 import com.teya.unifiedepossdk.PaymentStateSubscription
 import com.teya.unifiedepossdk.PrintStateDetails
@@ -117,8 +118,7 @@ object TeyaUtils {
             TransactionRecord(
                 id = state.eposTransactionId,
                 type = type,
-                isSuccess = state.gatewayTransactionId != null,
-                statusLabel = state.state.toString(),
+                isSuccess = state.state == PaymentState.Successful,
                 amountMinor = state.amount,
                 currency = state.currency,
                 gatewayPaymentId = state.gatewayPaymentId?.id,
@@ -160,7 +160,6 @@ object TeyaUtils {
                             id = refundResult.gatewayRefundId?.id ?: UUID.randomUUID().toString(),
                             type = TransactionType.Refund,
                             isSuccess = refundResult.result == RefundResult.Success,
-                            statusLabel = refundResult.result.toString(),
                             amountMinor = amountMinor,
                             currency = currency,
                             gatewayPaymentId = null,

@@ -207,7 +207,7 @@ private fun SaleBottomBar(
                 )
                 LemonadeUi.Button(
                     label = if (unreferencedRefund) {
-                        "Refund ${formatPrice(total)}"
+                        "Refund ${formatPrice(subtotal)}"
                     } else {
                         "Pay ${formatPrice(total)}"
                     },

@@ -58,7 +58,7 @@ class SaleViewModel : ViewModel() {
 
     fun pay() {
         if (unreferencedRefund) {
-            TeyaUtils.makeUnreferencedRefund(toMinorUnits(total))
+            TeyaUtils.makeUnreferencedRefund(toMinorUnits(subtotal))
         } else {
             TeyaUtils.makePayment(toMinorUnits(total), toMinorUnits(tipAmount))
         }

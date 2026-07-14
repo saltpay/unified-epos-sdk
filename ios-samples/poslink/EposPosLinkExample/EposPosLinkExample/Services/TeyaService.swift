@@ -91,7 +91,6 @@ final class TeyaService {
                     id: refundResult.gatewayRefundId?.id ?? UUID().uuidString,
                     type: .refund,
                     isSuccess: refundResult.result == TeyaRefundResult.success,
-                    statusLabel: refundResult.result.name,
                     amountMinor: Int(amountMinor),
                     currency: currency,
                     gatewayPaymentId: nil,
@@ -289,8 +288,7 @@ final class TeyaService {
             TransactionRecord(
                 id: state.eposTransactionId,
                 type: type,
-                isSuccess: state.gatewayTransactionId != nil,
-                statusLabel: state.state.name,
+                isSuccess: state.state == .successful,
                 amountMinor: Int(state.amount),
                 currency: state.currency,
                 gatewayPaymentId: state.gatewayPaymentId?.id,

@@ -67,7 +67,7 @@ struct BottomBar: View {
 
                     LemonadeUi.Button(
                         label: unreferencedRefund
-                            ? "Refund \(PriceUtils.formatPrice(total))"
+                            ? "Refund \(PriceUtils.formatPrice(subtotal))"
                             : "Pay \(PriceUtils.formatPrice(total))",
                         onClick: onPay,
                         size: .large,

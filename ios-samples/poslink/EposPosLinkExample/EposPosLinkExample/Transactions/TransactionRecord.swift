@@ -5,7 +5,6 @@ struct TransactionRecord: Identifiable, Equatable {
     let id: String
     let type: TeyaTransactionType
     let isSuccess: Bool
-    let statusLabel: String
     let amountMinor: Int
     let currency: String
     let gatewayPaymentId: String?

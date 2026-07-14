@@ -45,7 +45,7 @@ public partial class SaleViewModel : ObservableObject
     public decimal TipAmount => decimal.TryParse(TipInput, NumberStyles.Any, CultureInfo.InvariantCulture, out var v) ? v : 0m;
     public decimal Total => Subtotal + TipAmount;
     public string PayButtonText =>
-        UnreferencedRefund ? $"Refund {PriceUtils.FormatPrice(Total)}" : $"Pay {PriceUtils.FormatPrice(Total)}";
+        UnreferencedRefund ? $"Refund {PriceUtils.FormatPrice(Subtotal)}" : $"Pay {PriceUtils.FormatPrice(Total)}";
     public bool IsPayEnabled => ItemCount > 0 && IsSdkReady;
 
     private readonly TeyaSdkManager _teyaSdkManager = TeyaSdkManager.Instance;
@@ -78,7 +78,7 @@ public partial class SaleViewModel : ObservableObject
         {
             var refund = await _teyaSdkManager.MakeUnreferencedRefund(
                 id: Guid.NewGuid().ToString(),
-                amount: decimal.ToInt32(Total * 100),
+                amount: decimal.ToInt32(Subtotal * 100),
                 currency: "GBP"
             );
 

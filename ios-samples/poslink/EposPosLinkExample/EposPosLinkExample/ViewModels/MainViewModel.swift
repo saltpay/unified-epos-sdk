@@ -54,10 +54,11 @@ final class MainViewModel {
     }
 
     func pay() {
-        let totalInMinorUnits = Int32((total * 100).rounded())
         if unreferencedRefund {
-            TeyaService.shared.makeUnreferencedRefund(amountMinorUnits: totalInMinorUnits)
+            let subtotalInMinorUnits = Int32((subtotal * 100).rounded())
+            TeyaService.shared.makeUnreferencedRefund(amountMinorUnits: subtotalInMinorUnits)
         } else {
+            let totalInMinorUnits = Int32((total * 100).rounded())
             let tipInMinorUnits = Int32((tipAmount * 100).rounded())
             TeyaService.shared.makePayment(totalMinorUnits: totalInMinorUnits, tipMinorUnits: tipInMinorUnits)
         }

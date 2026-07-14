@@ -24,15 +24,13 @@ internal static class StatusVoice
 
     public static (string Label, TagVoice Voice) ForTransaction(TransactionRecord record)
     {
-        // StatusLabel is a raw enum name (a payment PaymentState, or a refund result code).
-        // Reuse ForPayment's friendly labels when it parses; otherwise fall back to IsSuccess.
-        var (label, voice) = Enum.TryParse<PaymentState>(record.StatusLabel, out var state)
-            ? ForPayment(state)
-            : (record.IsSuccess ? "Paid" : "Failed", record.IsSuccess ? TagVoice.Positive : TagVoice.Critical);
+        // Friendly label + voice from the record's type and its final success flag.
+        if (!record.IsSuccess)
+            return ("Failed", TagVoice.Critical);
 
-        if (record.IsSuccess && record.Type == TransactionType.Refund)
-            return ("Refunded", TagVoice.Info);
-        return (label, voice);
+        return record.Type == TransactionType.Refund
+            ? ("Refunded", TagVoice.Info)
+            : ("Paid", TagVoice.Positive);
     }
 
     public static (string Label, TagVoice Voice) ForPayment(PaymentState state) => state switch

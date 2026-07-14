@@ -6,7 +6,6 @@ data class TransactionRecord(
     val id: String,
     val type: TransactionType,
     val isSuccess: Boolean,
-    val statusLabel: String,
     val amountMinor: Int,
     val currency: String,
     val gatewayPaymentId: String?,

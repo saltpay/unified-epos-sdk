@@ -58,7 +58,7 @@ private struct TransactionRow: View {
                     TransactionStatusTag(record: record)
                 }
                 LemonadeUi.Text(
-                    "\(Self.typeLabel(record.type)) • \(record.statusLabel)",
+                    Self.typeLabel(record.type),
                     textStyle: LemonadeTypography.shared.bodyMediumRegular,
                     color: LemonadeTheme.colors.content.contentSecondary
                 )
@@ -108,13 +108,17 @@ private struct TransactionRow: View {
 private struct TransactionStatusTag: View {
     let record: TransactionRecord
 
+    private var label: String {
+        guard record.isSuccess else { return "Failed" }
+        return record.type == .refund ? "Refunded" : "Paid"
+    }
+
     private var voice: TagVoice {
-        if record.isSuccess && record.type == .refund { return .info }
-        if record.isSuccess { return .positive }
-        return .warning
+        guard record.isSuccess else { return .critical }
+        return record.type == .refund ? .info : .positive
     }
 
     var body: some View {
-        LemonadeUi.Tag(label: record.statusLabel, voice: voice)
+        LemonadeUi.Tag(label: label, voice: voice)
     }
 }
