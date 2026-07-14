@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/saltpay/teya-unified-epos-sdk-pod-spm",
       "state" : {
-        "revision" : "44cf267e19c57e095a3d840ffee04f64959ce912",
-        "version" : "1.7.0"
+        "revision" : "0d8ea23965d465e2d7265841f79b586e292cba2f",
+        "version" : "1.8.0"
       }
     }
   ],
