@@ -5,7 +5,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -19,6 +22,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.eposappexample.poslink.teya.TeyaUtils
+import com.example.eposappexample.poslink.ui.history.TransactionHistoryScreen
 import com.example.eposappexample.poslink.ui.sale.SaleScreen
 import com.example.eposappexample.poslink.ui.tables.PayAtTableScreen
 import com.example.eposappexample.poslink.ui.theme.EposAppExampleTheme
@@ -77,6 +81,7 @@ private fun AppRoot() {
         ) {
             composable(Destination.Sale.route) { SaleScreen() }
             composable(Destination.Tabs.route) { PayAtTableScreen() }
+            composable(Destination.History.route) { TransactionHistoryScreen() }
         }
     }
 }
@@ -93,5 +98,9 @@ private enum class Destination(
     Tabs(
         "tabs",
         "Pay at Table",
-        { LemonadeUi.Icon(icon = LemonadeIcons.ForkKnife, contentDescription = null) })
+        { LemonadeUi.Icon(icon = LemonadeIcons.ForkKnife, contentDescription = null) }),
+    History(
+        "history",
+        "History",
+        { Icon(Icons.Default.DateRange, contentDescription = null) })
 }

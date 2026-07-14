@@ -3,11 +3,19 @@ package com.example.eposappexample.poslink.teya
 import android.util.Log
 import com.example.eposappexample.poslink.CURRENCY_CODE
 import com.example.eposappexample.poslink.models.Product
+import com.example.eposappexample.poslink.transactions.TransactionRecord
+import com.example.eposappexample.poslink.transactions.TransactionStore
 import com.teya.sdkutilities.Logger
+import com.teya.unifiedepossdk.PaymentStateDetails
 import com.teya.unifiedepossdk.PaymentStateSubscription
 import com.teya.unifiedepossdk.PrintStateDetails
 import com.teya.unifiedepossdk.PrintingStatusSubscription
+import com.teya.unifiedepossdk.RefundResult
+import com.teya.unifiedepossdk.RefundResultDetails
+import com.teya.unifiedepossdk.RefundResultSubscription
 import com.teya.unifiedepossdk.TeyaPosLinkSDK
+import com.teya.unifiedepossdk.models.GatewayPaymentId
+import com.teya.unifiedepossdk.models.TransactionType
 import com.teya.unifiedepossdk.poslink.PosLinkSDK
 import com.teya.unifiedepossdk.poslink.PosLinkTabsApi
 import com.teya.unifiedepossdk.poslink.TabEventListener
@@ -83,8 +91,9 @@ object TeyaUtils {
 
         paymentSubscription.subscribe(
             object : PaymentStateSubscription.PaymentStateChangeListener {
-                override fun onPaymentStateChanged(state: PaymentStateSubscription.PaymentStateDetails) {
+                override fun onPaymentStateChanged(state: PaymentStateDetails) {
                     Log.d("SDK", "new state = $state, is it a final state = ${state.isFinal}")
+                    recordTransactionIfFinal(state, TransactionType.Payment)
                 }
             }
         )
@@ -99,6 +108,25 @@ object TeyaUtils {
         )
     }
 
+    private fun recordTransactionIfFinal(
+        state: PaymentStateDetails,
+        type: TransactionType,
+    ) {
+        if (!state.isFinal) return
+        TransactionStore.upsert(
+            TransactionRecord(
+                id = state.eposTransactionId,
+                type = type,
+                isSuccess = state.gatewayTransactionId != null,
+                statusLabel = state.state.toString(),
+                amountMinor = state.amount,
+                currency = state.currency,
+                gatewayPaymentId = state.gatewayPaymentId?.id,
+                timestamp = state.transactionTimestamp ?: System.currentTimeMillis(),
+            )
+        )
+    }
+
     fun printReceipt(products: List<Product>, tip: Double) {
         teyaPosLinkSDK.printingApi.printCustomTemplate(
             PrintUtils.buildCustomPrintTemplate(products, tip)
@@ -108,6 +136,69 @@ object TeyaUtils {
                     Log.d("SDK", "Printing state changed: $printStateDetails")
                 }
             }
+        )
+    }
+
+    // ---- Refund ----
+
+    fun refundPayment(
+        gatewayPaymentId: String,
+        amountMinor: Int,
+        currency: String,
+        onSettled: () -> Unit,
+    ) {
+        teyaPosLinkSDK.transactionsApi.refundPayment(
+            paymentId = GatewayPaymentId(gatewayPaymentId),
+            amount = amountMinor,
+            currency = currency,
+        ).subscribe(
+            object : RefundResultSubscription.RefundResultListener {
+                override fun onRefundResult(refundResult: RefundResultDetails) {
+                    Log.d("SDK", "Refund result: $refundResult")
+                    TransactionStore.upsert(
+                        TransactionRecord(
+                            id = refundResult.gatewayRefundId?.id ?: UUID.randomUUID().toString(),
+                            type = TransactionType.Refund,
+                            isSuccess = refundResult.result == RefundResult.Success,
+                            statusLabel = refundResult.result.toString(),
+                            amountMinor = amountMinor,
+                            currency = currency,
+                            gatewayPaymentId = null,
+                            timestamp = System.currentTimeMillis(),
+                        )
+                    )
+                    if (refundResult.result == RefundResult.Success) {
+                        TransactionStore.markRefunded(gatewayPaymentId)
+                    }
+                    onSettled()
+                }
+            }
+        )
+    }
+
+    fun makeUnreferencedRefund(amount: Int) {
+        val refundSubscription = teyaPosLinkSDK.transactionsApi.makeUnreferencedRefund(
+            transactionId = UUID.randomUUID().toString(),
+            amount = amount,
+            currency = CURRENCY_CODE,
+        )
+
+        refundSubscription.subscribe(
+            object : PaymentStateSubscription.PaymentStateChangeListener {
+                override fun onPaymentStateChanged(state: PaymentStateDetails) {
+                    Log.d("SDK", "unreferenced refund state = $state, final = ${state.isFinal}")
+                    recordTransactionIfFinal(state, TransactionType.Refund)
+                }
+            }
+        )
+
+        refundSubscription.subscribe(
+            TeyaPosLinkPaymentInProgressUi(
+                autoDismissOnFinalStateAfterMs = 2000,
+                onDismiss = {
+                    Log.d("SDK", "Unreferenced refund UI dismissed with details: $it")
+                }
+            )
         )
     }
 
@@ -188,7 +279,7 @@ object TeyaUtils {
         )
     }
 
-    /** Responds to a PAY_REQUEST by starting a tab-tagged payment and logging its state. */
+    /** Responds to a PAY_REQUEST by starting a tab-tagged payment and recording its final state. */
     fun makeTabPayment(tabContext: TabPaymentContext, amount: Int, currency: String) {
         val subscription = teyaPosLinkSDK.transactionsApi.makePayment(
             transactionId = UUID.randomUUID().toString(),
@@ -199,8 +290,9 @@ object TeyaUtils {
         )
         subscription.subscribe(
             object : PaymentStateSubscription.PaymentStateChangeListener {
-                override fun onPaymentStateChanged(state: PaymentStateSubscription.PaymentStateDetails) {
+                override fun onPaymentStateChanged(state: PaymentStateDetails) {
                     Log.d("SDK", "Tab payment state = $state, final = ${state.isFinal}")
+                    recordTransactionIfFinal(state, TransactionType.Payment)
                 }
             }
         )
