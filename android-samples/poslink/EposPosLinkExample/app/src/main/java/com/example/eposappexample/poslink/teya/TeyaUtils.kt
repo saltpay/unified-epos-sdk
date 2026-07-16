@@ -3,15 +3,12 @@ package com.example.eposappexample.poslink.teya
 import android.util.Log
 import com.example.eposappexample.poslink.CURRENCY_CODE
 import com.example.eposappexample.poslink.models.Product
-import com.example.eposappexample.poslink.transactions.TransactionRecord
-import com.example.eposappexample.poslink.transactions.TransactionStore
+import com.example.eposappexample.poslink.transactions.TransactionRecorder
 import com.teya.sdkutilities.Logger
-import com.teya.unifiedepossdk.PaymentState
 import com.teya.unifiedepossdk.PaymentStateDetails
 import com.teya.unifiedepossdk.PaymentStateSubscription
 import com.teya.unifiedepossdk.PrintStateDetails
 import com.teya.unifiedepossdk.PrintingStatusSubscription
-import com.teya.unifiedepossdk.RefundResult
 import com.teya.unifiedepossdk.RefundResultDetails
 import com.teya.unifiedepossdk.RefundResultSubscription
 import com.teya.unifiedepossdk.TeyaPosLinkSDK
@@ -25,6 +22,7 @@ import com.teya.unifiedepossdk.poslink.models.tabs.Tab
 import com.teya.unifiedepossdk.poslink.models.tabs.TabId
 import com.teya.unifiedepossdk.poslink.models.tabs.TabPage
 import com.teya.unifiedepossdk.poslink.models.tabs.TabPaymentContext
+import com.teya.unifiedepossdk.poslink.models.tabs.TabPaymentMethod
 import com.teya.unifiedepossdk.poslink.models.tabs.TabSummary
 import java.util.UUID
 
@@ -94,7 +92,7 @@ object TeyaUtils {
             object : PaymentStateSubscription.PaymentStateChangeListener {
                 override fun onPaymentStateChanged(state: PaymentStateDetails) {
                     Log.d("SDK", "new state = $state, is it a final state = ${state.isFinal}")
-                    recordTransactionIfFinal(state, TransactionType.Payment)
+                    TransactionRecorder.recordPaymentIfFinal(state, TransactionType.Payment)
                 }
             }
         )
@@ -105,24 +103,6 @@ object TeyaUtils {
                 onDismiss = { // Optional callback invoked after dismissing the UI with the current PaymentStateDetails.
                     Log.d("SDK", "Payment UI dismissed with payment state details: $it")
                 }
-            )
-        )
-    }
-
-    private fun recordTransactionIfFinal(
-        state: PaymentStateDetails,
-        type: TransactionType,
-    ) {
-        if (!state.isFinal) return
-        TransactionStore.upsert(
-            TransactionRecord(
-                id = state.eposTransactionId,
-                type = type,
-                isSuccess = state.state == PaymentState.Successful,
-                amountMinor = state.amount,
-                currency = state.currency,
-                gatewayPaymentId = state.gatewayPaymentId?.id,
-                timestamp = state.transactionTimestamp ?: System.currentTimeMillis(),
             )
         )
     }
@@ -155,20 +135,12 @@ object TeyaUtils {
             object : RefundResultSubscription.RefundResultListener {
                 override fun onRefundResult(refundResult: RefundResultDetails) {
                     Log.d("SDK", "Refund result: $refundResult")
-                    TransactionStore.upsert(
-                        TransactionRecord(
-                            id = refundResult.gatewayRefundId?.id ?: UUID.randomUUID().toString(),
-                            type = TransactionType.Refund,
-                            isSuccess = refundResult.result == RefundResult.Success,
-                            amountMinor = amountMinor,
-                            currency = currency,
-                            gatewayPaymentId = null,
-                            timestamp = System.currentTimeMillis(),
-                        )
+                    TransactionRecorder.recordRefund(
+                        refundResult = refundResult,
+                        gatewayPaymentId = gatewayPaymentId,
+                        amountMinor = amountMinor,
+                        currency = currency,
                     )
-                    if (refundResult.result == RefundResult.Success) {
-                        TransactionStore.markRefunded(gatewayPaymentId)
-                    }
                     onSettled()
                 }
             }
@@ -186,7 +158,7 @@ object TeyaUtils {
             object : PaymentStateSubscription.PaymentStateChangeListener {
                 override fun onPaymentStateChanged(state: PaymentStateDetails) {
                     Log.d("SDK", "unreferenced refund state = $state, final = ${state.isFinal}")
-                    recordTransactionIfFinal(state, TransactionType.Refund)
+                    TransactionRecorder.recordPaymentIfFinal(state, TransactionType.Refund)
                 }
             }
         )
@@ -291,7 +263,12 @@ object TeyaUtils {
             object : PaymentStateSubscription.PaymentStateChangeListener {
                 override fun onPaymentStateChanged(state: PaymentStateDetails) {
                     Log.d("SDK", "Tab payment state = $state, final = ${state.isFinal}")
-                    recordTransactionIfFinal(state, TransactionType.Payment)
+                    TransactionRecorder.recordPaymentIfFinal(
+                        state,
+                        TransactionType.Payment,
+                        isTab = true,
+                        isCash = tabContext.method == TabPaymentMethod.CASH,
+                    )
                 }
             }
         )

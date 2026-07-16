@@ -62,6 +62,13 @@ private struct TransactionRow: View {
                     textStyle: LemonadeTypography.shared.bodyMediumRegular,
                     color: LemonadeTheme.colors.content.contentSecondary
                 )
+                if let source = Self.sourceLabel(record) {
+                    LemonadeUi.Text(
+                        source,
+                        textStyle: LemonadeTypography.shared.bodyMediumRegular,
+                        color: LemonadeTheme.colors.content.contentSecondary
+                    )
+                }
                 LemonadeUi.Text(
                     Self.formatTimestamp(record.timestamp),
                     textStyle: LemonadeTypography.shared.bodySmallRegular,
@@ -91,6 +98,12 @@ private struct TransactionRow: View {
         case .refund: return "Refund"
         default: return "Unknown"
         }
+    }
+
+    private static func sourceLabel(_ record: TransactionRecord) -> String? {
+        guard record.type == .payment else { return nil }
+        if !record.isTabPayment { return "Card" }
+        return record.isCashPayment ? "Cash - Table payment" : "Card - Table payment"
     }
 
     private static let timestampFormatter: DateFormatter = {

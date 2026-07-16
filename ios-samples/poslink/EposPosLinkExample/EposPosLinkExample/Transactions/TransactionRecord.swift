@@ -10,8 +10,10 @@ struct TransactionRecord: Identifiable, Equatable {
     let gatewayPaymentId: String?
     let timestamp: Int64
     var isRefunded: Bool = false
+    var isCashPayment: Bool = false
+    var isTabPayment: Bool = false
 
     var isRefundable: Bool {
-        type == .payment && isSuccess && !isRefunded && gatewayPaymentId != nil
+        type == .payment && isSuccess && !isRefunded && gatewayPaymentId != nil && !isCashPayment
     }
 }

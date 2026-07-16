@@ -86,20 +86,12 @@ final class TeyaService {
         )
         refundSubscription.subscribe(refundListener: RefundResultListener { refundResult in
             print("Refund result: \(refundResult)")
-            TransactionStore.shared.upsert(
-                TransactionRecord(
-                    id: refundResult.gatewayRefundId?.id ?? UUID().uuidString,
-                    type: .refund,
-                    isSuccess: refundResult.result == TeyaRefundResult.success,
-                    amountMinor: Int(amountMinor),
-                    currency: currency,
-                    gatewayPaymentId: nil,
-                    timestamp: Int64(Date().timeIntervalSince1970 * 1000)
-                )
+            TransactionRecorder.recordRefund(
+                refundResult: refundResult,
+                gatewayPaymentId: gatewayPaymentId,
+                amountMinor: amountMinor,
+                currency: currency
             )
-            if refundResult.result == TeyaRefundResult.success {
-                TransactionStore.shared.markRefunded(gatewayPaymentId: gatewayPaymentId)
-            }
             onSettled()
         })
     }
@@ -246,7 +238,13 @@ final class TeyaService {
             purchaseData: nil,
             tabContext: tabContext
         )
-        subscription.subscribe(listener: PaymentStateChangeListener(type: .payment))
+        subscription.subscribe(
+            listener: PaymentStateChangeListener(
+                type: .payment,
+                isTab: true,
+                isCash: tabContext.method == TeyaTabPaymentMethod.cash
+            )
+        )
     }
 
     func subscribeToTabEvents(_ listener: TeyaTabEventListener) {
@@ -259,14 +257,18 @@ final class TeyaService {
     
     private class PaymentStateChangeListener: TeyaPaymentStateChangeListener {
         private let type: TeyaTransactionType
+        private let isTab: Bool
+        private let isCash: Bool
 
-        init(type: TeyaTransactionType) {
+        init(type: TeyaTransactionType, isTab: Bool = false, isCash: Bool = false) {
             self.type = type
+            self.isTab = isTab
+            self.isCash = isCash
         }
 
         func onPaymentStateChanged(state: TeyaPaymentStateDetails) {
             print("Payment state changed: \(state), is it a final state = \(state.isFinal)")
-            TeyaService.recordTransactionIfFinal(state: state, type: type)
+            TransactionRecorder.recordPaymentIfFinal(state: state, type: type, isTab: isTab, isCash: isCash)
         }
     }
 
@@ -282,21 +284,6 @@ final class TeyaService {
         }
     }
 
-    private static func recordTransactionIfFinal(state: TeyaPaymentStateDetails, type: TeyaTransactionType) {
-        guard state.isFinal else { return }
-        TransactionStore.shared.upsert(
-            TransactionRecord(
-                id: state.eposTransactionId,
-                type: type,
-                isSuccess: state.state == .successful,
-                amountMinor: Int(state.amount),
-                currency: state.currency,
-                gatewayPaymentId: state.gatewayPaymentId?.id,
-                timestamp: state.transactionTimestamp?.asInt64 ?? Int64(Date().timeIntervalSince1970 * 1000)
-            )
-        )
-    }
-    
     private final class PrintingStatusSubscriptionListener: TeyaPrintingStatusSubscriptionListener {
         func onPrintingStateChanged(printStateDetails: TeyaPrintStateDetails) {
             print("Printing state changed: \(printStateDetails)")

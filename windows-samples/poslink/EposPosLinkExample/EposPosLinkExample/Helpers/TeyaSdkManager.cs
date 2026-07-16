@@ -1,4 +1,4 @@
-﻿using EposPosLinkExample.Models;
+using EposPosLinkExample.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -27,7 +27,7 @@ namespace EposPosLinkExample.Helpers
 
         private Process? _process;
         private Dictionary<string, TaskCompletionSource<JsonElement>> _pendingRequests = new Dictionary<string, TaskCompletionSource<JsonElement>>();
-        private readonly TransactionStore _transactionStore = TransactionStore.Instance;
+        private readonly TransactionRecorder _recorder = new();
 
         public void StartProcess()
         {
@@ -99,7 +99,7 @@ namespace EposPosLinkExample.Helpers
             var responseJson = await SendRequestAsync("makePaymentAndSubscribe", paymentDetails);
             var state = JsonSerializer.Deserialize<MakePaymentStateChange>(responseJson)
                 ?? throw new InvalidOperationException("Failed to deserialize payment response");
-            RecordPayment(state, TransactionType.Payment);
+            _recorder.RecordPaymentIfFinal(state, TransactionType.Payment);
             return state;
         }
 
@@ -116,24 +116,12 @@ namespace EposPosLinkExample.Helpers
             var result = JsonSerializer.Deserialize<RefundResult>(responseJson)
                 ?? throw new InvalidOperationException("Failed to deserialize refund response");
 
-            _transactionStore.Upsert(new TransactionRecord(
-                Id: result.GatewayRefundId ?? Guid.NewGuid().ToString(),
-                Type: TransactionType.Refund,
-                IsSuccess: result.IsSuccess,
-                AmountMinor: refundAmount,
-                Currency: currency,
-                GatewayPaymentId: null,
-                Timestamp: DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
-
-            if (result.IsSuccess)
-            {
-                _transactionStore.MarkRefunded(gatewayPaymentId);
-            }
+            _recorder.RecordRefund(result, gatewayPaymentId, refundAmount, currency);
 
             return result;
         }
 
-        public async Task<UnreferencedRefundStateChange> MakeUnreferencedRefund(string id, int amount, string currency)
+        public async Task<MakePaymentStateChange> MakeUnreferencedRefund(string id, int amount, string currency)
         {
             var refundDetails = new
             {
@@ -144,17 +132,10 @@ namespace EposPosLinkExample.Helpers
             };
 
             var responseJson = await SendRequestAsync("makeUnreferencedRefund", refundDetails);
-            var state = JsonSerializer.Deserialize<UnreferencedRefundStateChange>(responseJson)
+            var state = JsonSerializer.Deserialize<MakePaymentStateChange>(responseJson)
                 ?? throw new InvalidOperationException("Failed to deserialize unreferenced refund response");
 
-            _transactionStore.Upsert(new TransactionRecord(
-                Id: state.TransactionId,
-                Type: TransactionType.Refund,
-                IsSuccess: state.IsSuccess,
-                AmountMinor: state.Amount,
-                Currency: state.Currency,
-                GatewayPaymentId: null,
-                Timestamp: state.TransactionTimestamp ?? DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
+            _recorder.RecordPaymentIfFinal(state, TransactionType.Refund);
 
             return state;
         }
@@ -263,23 +244,11 @@ namespace EposPosLinkExample.Helpers
             var state = JsonSerializer.Deserialize<MakePaymentStateChange>(responseJson);
             if (state != null)
             {
-                RecordPayment(state, TransactionType.Payment);
+                _recorder.RecordPaymentIfFinal(state, TransactionType.Payment,
+                    isTab: true,
+                    isCash: string.Equals(method, "Cash", StringComparison.OrdinalIgnoreCase));
             }
             return responseJson;
-        }
-
-        private void RecordPayment(MakePaymentStateChange state, TransactionType type)
-        {
-            if (!state.IsFinal) return;
-
-            _transactionStore.Upsert(new TransactionRecord(
-                Id: state.TransactionId,
-                Type: type,
-                IsSuccess: state.State == MakePaymentStateChange.PaymentState.SUCCESSFUL,
-                AmountMinor: state.Amount,
-                Currency: state.Currency,
-                GatewayPaymentId: state.GatewayPaymentId,
-                Timestamp: state.TransactionTimestamp ?? DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
         }
 
         public async Task<JsonElement> SubscribeToTabEvents()

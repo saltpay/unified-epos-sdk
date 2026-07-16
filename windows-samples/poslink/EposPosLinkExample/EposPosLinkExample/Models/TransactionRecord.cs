@@ -13,6 +13,10 @@ namespace EposPosLinkExample.Models
     {
         public bool IsRefunded { get; init; }
 
-        public bool IsRefundable => Type == TransactionType.Payment && IsSuccess && !IsRefunded && GatewayPaymentId != null;
+        public bool IsCashPayment { get; init; }
+
+        public bool IsTabPayment { get; init; }
+
+        public bool IsRefundable => Type == TransactionType.Payment && IsSuccess && !IsRefunded && GatewayPaymentId != null && !IsCashPayment;
     }
 }

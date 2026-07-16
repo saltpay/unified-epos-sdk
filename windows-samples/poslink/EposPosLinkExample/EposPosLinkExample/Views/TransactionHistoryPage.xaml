@@ -54,6 +54,9 @@
                             </StackPanel>
                             <TextBlock Text="{x:Bind TypeLabel}"
                                        Foreground="{ThemeResource LemonadeContentSecondaryBrush}"/>
+                            <TextBlock Text="{x:Bind SourceLabel}"
+                                       Visibility="{x:Bind SourceVisibility}"
+                                       Foreground="{ThemeResource LemonadeContentSecondaryBrush}"/>
                             <TextBlock Text="{x:Bind TimestampFormatted}"
                                        Foreground="{ThemeResource LemonadeContentSecondaryBrush}"/>
                         </StackPanel>

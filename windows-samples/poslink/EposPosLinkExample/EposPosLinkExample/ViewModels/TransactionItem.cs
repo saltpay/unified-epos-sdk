@@ -25,6 +25,14 @@ public partial class TransactionItem : ObservableObject
     public string TimestampFormatted =>
         DateTimeOffset.FromUnixTimeMilliseconds(_record.Timestamp).LocalDateTime.ToString("HH:mm • dd MMM yyyy");
 
+    public string SourceLabel => _record.Type != TransactionType.Payment
+        ? string.Empty
+        : !_record.IsTabPayment
+            ? "Card"
+            : _record.IsCashPayment ? "Cash - Table payment" : "Card - Table payment";
+
+    public Visibility SourceVisibility => string.IsNullOrEmpty(SourceLabel) ? Visibility.Collapsed : Visibility.Visible;
+
     // The status tag binds this through the StatusTo* converters (same path as Pay at Table).
     public TransactionRecord Status => _record;
 

@@ -118,6 +118,13 @@ private fun TransactionRow(
                 transactionTypeLabel(record.type),
                 textStyle = LemonadeTheme.typography.bodyLargeRegular
             )
+            sourceLabel(record)?.let { label ->
+                LemonadeUi.Text(
+                    label,
+                    textStyle = LemonadeTheme.typography.bodyMediumRegular,
+                    color = LemonadeTheme.colors.content.contentSecondary
+                )
+            }
             LemonadeUi.Text(
                 formatTimestamp(record.timestamp),
                 textStyle = LemonadeTheme.typography.bodyLargeRegular
@@ -150,6 +157,13 @@ private fun TransactionStatusTag(record: TransactionRecord) {
 private fun transactionTypeLabel(type: TransactionType): String = when (type) {
     TransactionType.Payment -> "Payment"
     TransactionType.Refund -> "Refund"
+}
+
+private fun sourceLabel(record: TransactionRecord): String? = when {
+    record.type != TransactionType.Payment -> null
+    !record.isTabPayment -> "Card"
+    !record.isCashPayment -> "Card - Table payment"
+    else -> "Cash - Table payment"
 }
 
 private fun formatTimestamp(timestamp: Long): String =
