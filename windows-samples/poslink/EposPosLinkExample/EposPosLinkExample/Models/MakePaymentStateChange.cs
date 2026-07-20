@@ -24,7 +24,7 @@ namespace EposPosLinkExample.Models
         public PaymentState State { get; set; }
 
         [JsonPropertyName("inProgressState")]
-        [JsonConverter(typeof(JsonStringEnumConverter))]
+        [JsonConverter(typeof(TolerantEnumConverter<InProgressState>))]
         public InProgressState? ProgressState { get; set; }
 
         [JsonPropertyName("isFinal")]
@@ -67,6 +67,7 @@ namespace EposPosLinkExample.Models
             DCC_SELECTION,
             REMOVE_CARD,
             APP_SELECTION,
+            MOTO_FORM_SHOWN,
             UNKNOWN
         }
 
