@@ -15,13 +15,13 @@ Documentation for the SDK using PosLink can be found [here](https://docs.teya.co
 
 ## Getting Started
 
-1. Clone the repository and open the `java-samples/EposPosLinkExample` project in your IDE.
+1. Clone the repository and open the `java-samples/poslink/EposPosLinkExample` project in your IDE.
 
-2. Set the SDK artifact id in `pom.xml` to match your platform (`macos-arm64`, `macos-x64`, `windows-x64`, `windows-arm64`, `linux-x64` or `linux-arm64`).
+2. Set the SDK artifact id in `pom.xml` to match your platform (`macos-arm64`, `macos-x64`, `windows-x64`, `windows-arm64`, `linux-x64` or `linux-arm64`). The sample ships with `windows-x64`.
     ```xml
     <dependency>
         <groupId>com.teya.epos</groupId>
-        <artifactId>unified-sdk-poslink-jvm-macos-arm64</artifactId>
+        <artifactId>unified-sdk-poslink-jvm-windows-x64</artifactId>
         <version>${teya.sdk.version}</version>
         <type>pom</type>
     </dependency>
@@ -49,5 +49,5 @@ Documentation for the SDK using PosLink can be found [here](https://docs.teya.co
 ## Tech Stack
 
 - **Language:** Java 17
-- **UI:** JavaFX 21 with FXML
+- **UI:** JavaFX 17 with FXML
 - **Build:** Maven

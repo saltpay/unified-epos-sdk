@@ -34,6 +34,8 @@ import java.util.prefs.Preferences;
 
 public class PayAtTableController implements TabEventListener {
 
+    private static final System.Logger LOG = System.getLogger("PayAtTable");
+
     private static final Preferences PREFERENCES = Preferences.userNodeForPackage(PayAtTableController.class);
     private static final String PAT_ENABLED_KEY = "pat_enabled";
 
@@ -79,6 +81,7 @@ public class PayAtTableController implements TabEventListener {
             sdk.setPayAtTableEnabled(current,
                     () -> PREFERENCES.putBoolean(PAT_ENABLED_KEY, current),
                     error -> Platform.runLater(() -> {
+                        LOG.log(System.Logger.Level.ERROR, "setPayAtTableEnabled failed: " + error);
                         suppressToggle = true;
                         patToggle.setSelected(previous);
                         suppressToggle = false;
@@ -96,6 +99,12 @@ public class PayAtTableController implements TabEventListener {
         sdk.subscribeToTabEvents(this);
         showList();
         rebuildTiles();
+
+        sdk.readyProperty().addListener((observable, previous, current) -> {
+            if (current) {
+                refreshTabs();
+            }
+        });
     }
 
     // ---- List ----
@@ -108,23 +117,18 @@ public class PayAtTableController implements TabEventListener {
                 basketsByTab.computeIfAbsent(tab.getTabId().getValue(), key -> freshBasket());
             }
             rebuildTiles();
-        }), error -> {
-        });
+        }), error -> LOG.log(System.Logger.Level.ERROR, "listTabs failed: " + error));
     }
 
     private void addTable() {
         new AddTableDialog().showAndWait().ifPresent(name -> {
-            if (name.isBlank()) {
-                return;
-            }
             String tabId = "tab-" + System.currentTimeMillis();
-            basketsByTab.put(tabId, freshBasket());
-            tabsById.put(tabId, new TabSummary(new TabId(tabId), name, TabStatus.OPEN, 0, null, null,
-                    TeyaSdkManager.CURRENCY_CODE, null));
-            rebuildTiles();
-            sdk.openTab(tabId, name, tab -> {
-            }, error -> {
-            });
+            sdk.openTab(tabId, name, tab -> Platform.runLater(() -> {
+                String id = tab.getTabId().getValue();
+                basketsByTab.put(id, freshBasket());
+                tabsById.put(id, toSummary(tab));
+                rebuildTiles();
+            }), error -> LOG.log(System.Logger.Level.ERROR, "openTab failed: " + error));
         });
     }
 
@@ -183,8 +187,8 @@ public class PayAtTableController implements TabEventListener {
             return;
         }
         String tabId = selectedTabId;
-        sdk.closeTab(tabId, () -> Platform.runLater(() -> handleTabClosed(tabId)), error -> {
-        });
+        sdk.closeTab(tabId, () -> Platform.runLater(() -> handleTabClosed(tabId)),
+                error -> LOG.log(System.Logger.Level.ERROR, "closeTab failed: " + error));
     }
 
     private void addItems() {
@@ -274,11 +278,10 @@ public class PayAtTableController implements TabEventListener {
         String tabId = request.getTabId().getValue();
         Platform.runLater(() -> {
             List<ProductItem> basket = basketsByTab.getOrDefault(tabId, List.of());
-            List<ProductItem> billItems = basket.stream().filter(item -> item.getQuantity() > 0).toList();
             sdk.respondToBillRequest(tabId, tabName(tabId), request.getTerminalId(), basketTotalMinor(tabId),
-                    billItems, () -> {
-                    }, error -> {
-                    });
+                    basket,
+                    () -> LOG.log(System.Logger.Level.DEBUG, "Bill shown on terminal " + request.getTerminalId()),
+                    error -> LOG.log(System.Logger.Level.ERROR, "respondToBillRequest failed: " + error));
             refreshTab(tabId);
         });
     }
@@ -296,8 +299,7 @@ public class PayAtTableController implements TabEventListener {
     public void onTabCompleted(TabCompletion completion) {
         String tabId = completion.getTabId().getValue();
         Platform.runLater(() -> sdk.closeTab(tabId, () -> Platform.runLater(() -> handleTabClosed(tabId)),
-                error -> {
-                }));
+                error -> LOG.log(System.Logger.Level.ERROR, "closeTab failed: " + error)));
     }
 
     @Override
@@ -340,8 +342,7 @@ public class PayAtTableController implements TabEventListener {
                 rebuildDetails();
             }
             rebuildTiles();
-        }), error -> {
-        });
+        }), error -> LOG.log(System.Logger.Level.ERROR, "getTab failed: " + error));
     }
 
     private static TabSummary toSummary(Tab tab) {

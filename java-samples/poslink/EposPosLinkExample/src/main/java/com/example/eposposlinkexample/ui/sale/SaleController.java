@@ -6,6 +6,7 @@ import com.example.eposposlinkexample.teya.TeyaSdkManager;
 import com.example.eposposlinkexample.util.PriceUtils;
 
 import com.teya.unifiedepossdk.PaymentState;
+import com.teya.unifiedepossdk.PaymentStateDetails;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -14,6 +15,7 @@ import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -32,6 +34,7 @@ public class SaleController {
     @FXML private Label itemCountLabel;
     @FXML private Label subtotalLabel;
     @FXML private TextField tipField;
+    @FXML private CheckBox unreferencedRefundToggle;
     @FXML private Button printButton;
     @FXML private Button payButton;
 
@@ -57,6 +60,8 @@ public class SaleController {
             }
             recompute();
         });
+
+        unreferencedRefundToggle.selectedProperty().addListener((observable, previous, current) -> recompute());
 
         BooleanBinding payEnabled = sdk.readyProperty().and(itemCount.greaterThan(0));
         payButton.disableProperty().bind(payEnabled.not());
@@ -104,17 +109,27 @@ public class SaleController {
         itemCount.set(count);
         itemCountLabel.setText(count == 1 ? "1 item" : count + " items");
         subtotalLabel.setText("Subtotal: " + PriceUtils.formatPrice(subtotal));
-        payButton.setText("Pay " + PriceUtils.formatPrice(total()));
+        payButton.setText(unreferencedRefundToggle.isSelected()
+                ? "Refund " + PriceUtils.formatPrice(subtotal)
+                : "Pay " + PriceUtils.formatPrice(total()));
     }
 
     private void pay() {
+        if (unreferencedRefundToggle.isSelected()) {
+            sdk.makeUnreferencedRefund(PriceUtils.toMinorUnits(subtotal), this::clearBasketWhenSuccessful);
+            return;
+        }
         int totalMinor = PriceUtils.toMinorUnits(total());
         Integer tipMinor = tipAmount().signum() > 0 ? PriceUtils.toMinorUnits(tipAmount()) : null;
-        sdk.makePayment(totalMinor, tipMinor, state -> Platform.runLater(() -> {
+        sdk.makePayment(totalMinor, tipMinor, this::clearBasketWhenSuccessful);
+    }
+
+    private void clearBasketWhenSuccessful(PaymentStateDetails state) {
+        Platform.runLater(() -> {
             if (state.isFinal() && state.getState() == PaymentState.Successful) {
                 clearBasket();
             }
-        }));
+        });
     }
 
     private void clearBasket() {

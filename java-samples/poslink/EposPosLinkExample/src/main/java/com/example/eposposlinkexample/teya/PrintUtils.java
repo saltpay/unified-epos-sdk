@@ -55,6 +55,7 @@ final class PrintUtils {
                 new TableHeaderCell(new RowElement.Text("PRICE", true, Align.Right), 1f));
 
         List<TableRow> rows = items.stream()
+                .filter(item -> item.getQuantity() > 0)
                 .map(item -> new TableRow(List.of(
                         new RowElement.Text(
                                 item.getQuantity() + "x " + item.product().name().toUpperCase(), false, Align.Left),

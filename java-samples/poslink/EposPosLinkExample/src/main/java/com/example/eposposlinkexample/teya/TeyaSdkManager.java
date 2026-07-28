@@ -42,9 +42,9 @@ public final class TeyaSdkManager {
 
     private final PosLinkSDK teyaPosLinkSDK = TeyaPosLinkSDK.init(
             new PosLinkSDK.AuthConfig.Managed(CLIENT_ID, CLIENT_SECRET),
-            false,
-            null,
-            new LoggerImpl());
+            false, // isProductionEnv, set to true for production - make sure client id and secret match this
+            null,  // Optional: identifier for your ePOS app instance
+            new LoggerImpl()); // Optional: your custom logger implementation
 
     private TeyaSdkManager() {
     }
@@ -113,9 +113,28 @@ public final class TeyaSdkManager {
 
     public void makePayment(int amountMinor, Integer tipMinor, Consumer<PaymentStateDetails> onStateChanged) {
         teyaPosLinkSDK.getTransactionsApi()
-                .makePayment(UUID.randomUUID().toString(), amountMinor, CURRENCY_CODE, tipMinor, null, null)
+                .makePayment(
+                        UUID.randomUUID().toString(), // or whatever identifier you already have for this payment
+                        amountMinor, // the total amount to be paid including the tip, in minor units (e.g. pence)
+                        CURRENCY_CODE, // the ISO 4217 currency code (e.g. "GBP", "EUR")
+                        tipMinor, // optional tip amount in minor units, included in the total, not on top of it
+                        null, // optional purchase data: line items and discounts (experimental)
+                        null) // optional tab context, set only for Pay at Table payments
                 .subscribe(state -> {
                     TransactionRecorder.recordPaymentIfFinal(state, TransactionType.Payment, false, false);
+                    onStateChanged.accept(state);
+                })
+                .subscribe(TeyaPosLinkPaymentInProgressUi.create());
+    }
+
+    public void makeUnreferencedRefund(int amountMinor, Consumer<PaymentStateDetails> onStateChanged) {
+        teyaPosLinkSDK.getTransactionsApi()
+                .makeUnreferencedRefund(
+                        UUID.randomUUID().toString(), // or whatever identifier you already have for this refund
+                        amountMinor, // the amount to refund, in minor units (e.g. pence)
+                        CURRENCY_CODE) // the ISO 4217 currency code (e.g. "GBP", "EUR")
+                .subscribe(state -> {
+                    TransactionRecorder.recordPaymentIfFinal(state, TransactionType.Refund, false, false);
                     onStateChanged.accept(state);
                 })
                 .subscribe(TeyaPosLinkPaymentInProgressUi.create());
@@ -131,7 +150,11 @@ public final class TeyaSdkManager {
 
     public void refundPayment(String gatewayPaymentId, int amountMinor, String currency, Runnable onSettled) {
         teyaPosLinkSDK.getTransactionsApi()
-                .refundPayment(new GatewayPaymentId(gatewayPaymentId), amountMinor, currency, null)
+                .refundPayment(
+                        new GatewayPaymentId(gatewayPaymentId), // from a successful payment's PaymentStateDetails
+                        amountMinor, // the amount to refund, in minor units (e.g. pence)
+                        currency, // should match the original payment's currency
+                        null) // optional list of the line items included in the refund
                 .subscribe(refundResult -> {
                     LOG.log(System.Logger.Level.DEBUG, "Refund result: " + refundResult);
                     TransactionRecorder.recordRefund(refundResult, gatewayPaymentId, amountMinor, currency);
@@ -171,10 +194,10 @@ public final class TeyaSdkManager {
 
     public void listTabs(Consumer<List<TabSummary>> onSuccess, Consumer<String> onFailure) {
         teyaPosLinkSDK.getTabsApi().listTabs(
-                null,
-                null,
-                null,
-                null,
+                null, // optional status filter, defaults to active tabs (OPEN, PAYING, PAUSED)
+                null, // optional "after" cursor, from a previous page
+                null, // optional "before" cursor, from a previous page
+                null, // optional page size, the backend default applies when null
                 page -> {
                     onSuccess.accept(page.getItems());
                     return Unit.INSTANCE;
@@ -214,12 +237,12 @@ public final class TeyaSdkManager {
     public void respondToBillRequest(String tabId, String tabName, String terminalId, int totalAmountMinor,
                                      List<ProductItem> billItems, Runnable onSuccess, Consumer<String> onFailure) {
         teyaPosLinkSDK.getTabsApi().respondToBillRequest(
-                new TabId(tabId),
-                terminalId,
-                totalAmountMinor,
-                CURRENCY_CODE,
-                PrintUtils.buildBillTemplate(tabName, billItems, totalAmountMinor),
-                null,
+                new TabId(tabId), // echoes the tab id from the SHOW_BILL_REQUEST event
+                terminalId, // echoes the terminal that requested the bill
+                totalAmountMinor, // the total bill amount, in minor units (e.g. pence)
+                CURRENCY_CODE, // the ISO 4217 currency code (e.g. "GBP", "EUR")
+                PrintUtils.buildBillTemplate(tabName, billItems, totalAmountMinor), // rendered on the terminal
+                null, // optional pre-rendered bill image, which replaces the template above when supplied
                 () -> {
                     onSuccess.run();
                     return Unit.INSTANCE;
@@ -232,7 +255,13 @@ public final class TeyaSdkManager {
 
     public void makeTabPayment(TabPaymentContext tabContext, int amountMinor, String currency) {
         teyaPosLinkSDK.getTransactionsApi()
-                .makePayment(UUID.randomUUID().toString(), amountMinor, currency, null, null, tabContext)
+                .makePayment(
+                        UUID.randomUUID().toString(), // or whatever identifier you already have for this payment
+                        amountMinor, // the amount the terminal asked for, in minor units (e.g. pence)
+                        currency, // the tab's currency, echoed from the PAY_REQUEST event
+                        null, // the terminal collects any tip itself for tab payments
+                        null, // optional purchase data: line items and discounts
+                        tabContext) // tags the payment against the tab that requested it
                 .subscribe(state -> {
                     LOG.log(System.Logger.Level.DEBUG, "Tab payment state: " + state);
                     TransactionRecorder.recordPaymentIfFinal(state, TransactionType.Payment, true,
