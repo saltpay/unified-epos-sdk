@@ -16,7 +16,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Font;
 
 import java.util.List;
 
@@ -42,8 +41,6 @@ public class ProductCatalogueDialog extends Dialog<Void> {
     }
 
     private VBox createCard(ProductItem item) {
-        Label emoji = new Label(item.product().emoji());
-        emoji.setFont(Font.font(24));
         Label name = new Label(item.product().name());
         name.setStyle("-fx-font-weight: bold;");
         Label lineTotal = new Label();
@@ -61,7 +58,7 @@ public class ProductCatalogueDialog extends Dialog<Void> {
         quantityRow.visibleProperty().bind(item.quantityProperty().greaterThan(0));
         quantityRow.managedProperty().bind(item.quantityProperty().greaterThan(0));
 
-        VBox card = new VBox(4, emoji, name, lineTotal, quantityRow);
+        VBox card = new VBox(4, name, lineTotal, quantityRow);
         card.setPrefWidth(150);
         card.setStyle("-fx-background-color: white; -fx-background-radius: 8;"
                 + " -fx-border-color: #dddbd7; -fx-border-radius: 8; -fx-padding: 12;");

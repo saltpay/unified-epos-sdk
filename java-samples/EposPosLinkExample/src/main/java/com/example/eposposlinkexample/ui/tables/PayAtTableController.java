@@ -243,7 +243,7 @@ public class PayAtTableController implements TabEventListener {
     }
 
     private HBox createDetailRow(ProductItem item) {
-        Label name = new Label(item.product().emoji() + " " + item.product().name());
+        Label name = new Label(item.product().name());
         Region spacer = new Region();
         HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
 

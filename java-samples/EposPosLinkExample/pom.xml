@@ -12,7 +12,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>17</maven.compiler.release>
-        <javafx.version>21.0.6</javafx.version>
+        <javafx.version>17.0.14</javafx.version>
         <teya.sdk.version>1.8.0</teya.sdk.version>
     </properties>
 
@@ -48,7 +48,7 @@
         -->
         <dependency>
             <groupId>com.teya.epos</groupId>
-            <artifactId>unified-sdk-poslink-jvm-macos-arm64</artifactId>
+            <artifactId>unified-sdk-poslink-jvm-windows-x64</artifactId>
             <version>${teya.sdk.version}</version>
             <type>pom</type>
         </dependency>

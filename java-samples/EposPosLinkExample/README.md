@@ -10,7 +10,6 @@ Documentation for the SDK using PosLink can be found [here](https://docs.teya.co
 ## Prerequisites
 
 - JDK 17 or later
-- Maven 3.8 or later (macOS: `brew install maven`, Windows: `winget install Apache.Maven`)
 - A Teya terminal to which you can link the app
 - Client credentials (`clientId` and `clientSecret`) from [partner.teya.xyz](https://partner.teya.xyz) (development environment)
 
@@ -40,7 +39,11 @@ Documentation for the SDK using PosLink can be found [here](https://docs.teya.co
 
 4. Build and run the app.
     ```shell
-    mvn javafx:run
+    # macOS / Linux
+    ./mvnw javafx:run
+
+    # Windows
+    mvnw.cmd javafx:run
     ```
 
 ## Tech Stack
