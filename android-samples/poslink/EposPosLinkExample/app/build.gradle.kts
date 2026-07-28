@@ -44,7 +44,7 @@ android {
 }
 
 dependencies {
-    implementation("com.teya.epos:unified-sdk-poslink:1.7.0")
+    implementation("com.teya.epos:unified-sdk-poslink:1.8.0")
 
     implementation(libs.lemonade.ui)
     implementation(libs.androidx.core.ktx)

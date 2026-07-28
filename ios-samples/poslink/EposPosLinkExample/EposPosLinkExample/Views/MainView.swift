@@ -21,7 +21,9 @@ struct MainView: View {
                     tipInput: $viewModel.tipInput,
                     onPay: { viewModel.pay() },
                     onPrint: { viewModel.printReceipt() },
-                    payEnabled: viewModel.payEnabled
+                    payEnabled: viewModel.payEnabled,
+                    unreferencedRefund: viewModel.unreferencedRefund,
+                    onUnreferencedRefundChange: { viewModel.updateUnreferencedRefund($0) }
                 )
             }
             .lemonadeTopBar(label: "ePOS Sample Poslink") {

@@ -1,0 +1,22 @@
+package com.example.eposappexample.poslink.transactions
+
+import com.teya.unifiedepossdk.models.TransactionType
+
+data class TransactionRecord(
+    val id: String,
+    val type: TransactionType,
+    val isSuccess: Boolean,
+    val amountMinor: Int,
+    val currency: String,
+    val gatewayPaymentId: String?,
+    val timestamp: Long,
+    val isRefunded: Boolean = false,
+    val isCashPayment: Boolean = false,
+    val isTabPayment: Boolean = false,
+) {
+
+    // a referenced refund needs the original payment's gatewayPaymentId, so it must be present
+    val isRefundable: Boolean
+        get() = type == TransactionType.Payment && isSuccess && !isRefunded &&
+                gatewayPaymentId != null && !isCashPayment
+}

@@ -30,6 +30,11 @@
                     <FontIcon Glyph="&#xEC09;"/>
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
+            <NavigationViewItem Content="History" Tag="history">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE81C;"/>
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
         </NavigationView.MenuItems>
 
         <NavigationView.PaneFooter>

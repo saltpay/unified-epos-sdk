@@ -59,12 +59,56 @@ final class TeyaService {
             purchaseData: nil
         )
         
-        paymentSubscription.subscribe(listener: PaymentStateChangeListener())
+        paymentSubscription.subscribe(listener: PaymentStateChangeListener(type: .payment))
         paymentSubscription.subscribe(
             listener: TeyaPosLinkInProgressUiKt.create(
                 autoDismissOnFinalStateAfterMs: 2000, // Time in ms before the UI auto-dismisses after a final state
                 onDismiss: { state in // Optional callback invoked after dismissing the UI with the current PaymentStateDetails.
                     print("Payment UI dismissed with payment state details: \(state)")
+                }
+            )
+        )
+    }
+
+    // ---- Refund ----
+
+    func refundPayment(
+        gatewayPaymentId: String,
+        amountMinor: Int32,
+        currency: String,
+        onSettled: @escaping () -> Void
+    ) {
+        let refundSubscription = teyaPosLinkSDK.transactionsApi.refundPayment(
+            paymentId: TeyaGatewayPaymentId(id: gatewayPaymentId),
+            amount: amountMinor,
+            currency: currency,
+            allocatedLineItems: nil
+        )
+        refundSubscription.subscribe(refundListener: RefundResultListener { refundResult in
+            print("Refund result: \(refundResult)")
+            TransactionRecorder.recordRefund(
+                refundResult: refundResult,
+                gatewayPaymentId: gatewayPaymentId,
+                amountMinor: amountMinor,
+                currency: currency
+            )
+            onSettled()
+        })
+    }
+
+    func makeUnreferencedRefund(amountMinorUnits: Int32) {
+        let refundSubscription = teyaPosLinkSDK.transactionsApi.makeUnreferencedRefund(
+            transactionId: UUID().uuidString,
+            amount: amountMinorUnits,
+            currency: PriceUtils.currencyCode
+        )
+
+        refundSubscription.subscribe(listener: PaymentStateChangeListener(type: .refund))
+        refundSubscription.subscribe(
+            listener: TeyaPosLinkInProgressUiKt.create(
+                autoDismissOnFinalStateAfterMs: 2000,
+                onDismiss: { state in
+                    print("Unreferenced refund UI dismissed with payment state details: \(state)")
                 }
             )
         )
@@ -194,9 +238,15 @@ final class TeyaService {
             purchaseData: nil,
             tabContext: tabContext
         )
-        subscription.subscribe(listener: PaymentStateChangeListener())
+        subscription.subscribe(
+            listener: PaymentStateChangeListener(
+                type: .payment,
+                isTab: true,
+                isCash: tabContext.method == TeyaTabPaymentMethod.cash
+            )
+        )
     }
-    
+
     func subscribeToTabEvents(_ listener: TeyaTabEventListener) {
         teyaPosLinkSDK.tabsApi.tabEvents.subscribe(tabEventListener: listener)
     }
@@ -206,11 +256,34 @@ final class TeyaService {
     }
     
     private class PaymentStateChangeListener: TeyaPaymentStateChangeListener {
+        private let type: TeyaTransactionType
+        private let isTab: Bool
+        private let isCash: Bool
+
+        init(type: TeyaTransactionType, isTab: Bool = false, isCash: Bool = false) {
+            self.type = type
+            self.isTab = isTab
+            self.isCash = isCash
+        }
+
         func onPaymentStateChanged(state: TeyaPaymentStateDetails) {
-            print("Payment state changed: \(state)")
+            print("Payment state changed: \(state), is it a final state = \(state.isFinal)")
+            TransactionRecorder.recordPaymentIfFinal(state: state, type: type, isTab: isTab, isCash: isCash)
         }
     }
-    
+
+    private class RefundResultListener: TeyaRefundResultListener {
+        private let onResult: (TeyaRefundResultDetails) -> Void
+
+        init(_ onResult: @escaping (TeyaRefundResultDetails) -> Void) {
+            self.onResult = onResult
+        }
+
+        func onRefundResult(refundResult: TeyaRefundResultDetails) {
+            onResult(refundResult)
+        }
+    }
+
     private final class PrintingStatusSubscriptionListener: TeyaPrintingStatusSubscriptionListener {
         func onPrintingStateChanged(printStateDetails: TeyaPrintStateDetails) {
             print("Printing state changed: \(printStateDetails)")

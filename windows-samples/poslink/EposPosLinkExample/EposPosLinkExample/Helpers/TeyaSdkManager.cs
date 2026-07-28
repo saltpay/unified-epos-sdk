@@ -1,4 +1,4 @@
-﻿using EposPosLinkExample.Models;
+using EposPosLinkExample.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -27,6 +27,7 @@ namespace EposPosLinkExample.Helpers
 
         private Process? _process;
         private Dictionary<string, TaskCompletionSource<JsonElement>> _pendingRequests = new Dictionary<string, TaskCompletionSource<JsonElement>>();
+        private readonly TransactionRecorder _recorder = new();
 
         public void StartProcess()
         {
@@ -96,10 +97,49 @@ namespace EposPosLinkExample.Helpers
             };
 
             var responseJson = await SendRequestAsync("makePaymentAndSubscribe", paymentDetails);
-            return JsonSerializer.Deserialize<MakePaymentStateChange>(responseJson)
+            var state = JsonSerializer.Deserialize<MakePaymentStateChange>(responseJson)
                 ?? throw new InvalidOperationException("Failed to deserialize payment response");
+            _recorder.RecordPaymentIfFinal(state, TransactionType.Payment);
+            return state;
         }
-         
+
+        public async Task<RefundResult> RefundPayment(string gatewayPaymentId, int refundAmount, string currency)
+        {
+            var refundParams = new
+            {
+                gatewayPaymentId, // id from a successful makePayment response ("gatewayPaymentId")
+                amount = refundAmount, // amount to be refunded in minor units
+                currency, // ISO 4217 currency code, should match the original payment's currency
+            };
+
+            var responseJson = await SendRequestAsync("refundPayment", refundParams);
+            var result = JsonSerializer.Deserialize<RefundResult>(responseJson)
+                ?? throw new InvalidOperationException("Failed to deserialize refund response");
+
+            _recorder.RecordRefund(result, gatewayPaymentId, refundAmount, currency);
+
+            return result;
+        }
+
+        public async Task<MakePaymentStateChange> MakeUnreferencedRefund(string id, int amount, string currency)
+        {
+            var refundDetails = new
+            {
+                transactionId = id, // business id for this refund, or a random UUID
+                amount, // the amount to refund in minor units
+                currency, // The ISO 4217 currency code (e.g., "GBP", "EUR").
+                useTeyaDefaultUi = true, // if true, the SDK app will show an interactive "in progress" UI window
+            };
+
+            var responseJson = await SendRequestAsync("makeUnreferencedRefund", refundDetails);
+            var state = JsonSerializer.Deserialize<MakePaymentStateChange>(responseJson)
+                ?? throw new InvalidOperationException("Failed to deserialize unreferenced refund response");
+
+            _recorder.RecordPaymentIfFinal(state, TransactionType.Refund);
+
+            return state;
+        }
+
         public async Task<JsonElement> PrintCustomTemplate(PrintTemplate template)
         {
             return await SendRequestAsync("printCustomTemplate", template);
@@ -200,7 +240,15 @@ namespace EposPosLinkExample.Helpers
                 }
             };
 
-            return await SendRequestAsync("makePaymentAndSubscribe", parameters);
+            var responseJson = await SendRequestAsync("makePaymentAndSubscribe", parameters);
+            var state = JsonSerializer.Deserialize<MakePaymentStateChange>(responseJson);
+            if (state != null)
+            {
+                _recorder.RecordPaymentIfFinal(state, TransactionType.Payment,
+                    isTab: true,
+                    isCash: string.Equals(method, "Cash", StringComparison.OrdinalIgnoreCase));
+            }
+            return responseJson;
         }
 
         public async Task<JsonElement> SubscribeToTabEvents()

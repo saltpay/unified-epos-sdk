@@ -17,6 +17,9 @@ class SaleViewModel : ViewModel() {
     var tipInput by mutableStateOf("")
         private set
 
+    var unreferencedRefund by mutableStateOf(false)
+        private set
+
     val tipAmount by derivedStateOf { tipInput.toDoubleOrNull() ?: 0.0 }
 
     val subtotal by derivedStateOf { basket.sumOf { it.price * it.quantity } }
@@ -49,8 +52,16 @@ class SaleViewModel : ViewModel() {
         tipInput = value
     }
 
+    fun updateUnreferencedRefund(value: Boolean) {
+        unreferencedRefund = value
+    }
+
     fun pay() {
-        TeyaUtils.makePayment(toMinorUnits(total), toMinorUnits(tipAmount))
+        if (unreferencedRefund) {
+            TeyaUtils.makeUnreferencedRefund(toMinorUnits(subtotal))
+        } else {
+            TeyaUtils.makePayment(toMinorUnits(total), toMinorUnits(tipAmount))
+        }
     }
 
     fun printReceipt() {

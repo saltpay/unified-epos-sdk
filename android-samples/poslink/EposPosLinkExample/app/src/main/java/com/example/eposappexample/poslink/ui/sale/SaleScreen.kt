@@ -1,5 +1,6 @@
 package com.example.eposappexample.poslink.ui.sale
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +16,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TopAppBar
@@ -23,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -63,7 +66,9 @@ fun SaleScreen(
                 onTipInputChange = { viewModel.updateTipInput(it) },
                 onPay = { viewModel.pay() },
                 onPrint = { viewModel.printReceipt() },
-                payEnabled = viewModel.payEnabled
+                payEnabled = viewModel.payEnabled,
+                unreferencedRefund = viewModel.unreferencedRefund,
+                onUnreferencedRefundChange = { viewModel.updateUnreferencedRefund(it) }
             )
         }
     ) { padding ->
@@ -129,7 +134,9 @@ private fun SaleBottomBar(
     onTipInputChange: (String) -> Unit,
     onPay: () -> Unit,
     onPrint: () -> Unit,
-    payEnabled: Boolean
+    payEnabled: Boolean,
+    unreferencedRefund: Boolean,
+    onUnreferencedRefundChange: (Boolean) -> Unit
 ) {
     Surface {
         Column(
@@ -165,6 +172,24 @@ private fun SaleBottomBar(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onUnreferencedRefundChange(!unreferencedRefund) },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = unreferencedRefund,
+                    onCheckedChange = { onUnreferencedRefundChange(it) }
+                )
+                LemonadeUi.Text(
+                    "Unreferenced refund",
+                    textStyle = LemonadeTheme.typography.bodyLargeRegular
+                )
+            }
+
             Spacer(modifier = Modifier.height(12.dp))
 
             Row(
@@ -181,7 +206,11 @@ private fun SaleBottomBar(
                     modifier = Modifier.weight(1f)
                 )
                 LemonadeUi.Button(
-                    label = "Pay ${formatPrice(total)}",
+                    label = if (unreferencedRefund) {
+                        "Refund ${formatPrice(subtotal)}"
+                    } else {
+                        "Pay ${formatPrice(total)}"
+                    },
                     onClick = onPay,
                     variant = LemonadeButtonVariant.Primary,
                     type = LemonadeButtonType.Solid,

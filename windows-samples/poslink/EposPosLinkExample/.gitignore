@@ -2,6 +2,11 @@
 [Bb]in/
 [Oo]bj/
 
+## Bundled Teya Integrations App ships a jlink'd JVM; its runtime/bin (java.exe, jvm.dll)
+## must be tracked and would otherwise be dropped by the [Bb]in/ rule above.
+!**/TeyaEposIntegrationsApp/runtime/bin/
+!**/TeyaEposIntegrationsApp/runtime/bin/**
+
 ## Visual Studio
 .vs/
 

@@ -41,6 +41,7 @@ public partial class TablesViewModel : ObservableObject
     public partial Tab? SelectedTabDetail { get; private set; }
 
     public bool IsPaymentInProgress =>
+        SelectedTabDetail?.Status != TabStatus.PAUSED &&
         SelectedTabDetail?.PaymentRequests?.Any(p => !p.Status.IsFinal()) == true;
 
     [ObservableProperty]

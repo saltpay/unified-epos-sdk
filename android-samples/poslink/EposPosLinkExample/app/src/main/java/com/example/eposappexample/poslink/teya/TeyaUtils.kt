@@ -3,11 +3,17 @@ package com.example.eposappexample.poslink.teya
 import android.util.Log
 import com.example.eposappexample.poslink.CURRENCY_CODE
 import com.example.eposappexample.poslink.models.Product
+import com.example.eposappexample.poslink.transactions.TransactionRecorder
 import com.teya.sdkutilities.Logger
+import com.teya.unifiedepossdk.PaymentStateDetails
 import com.teya.unifiedepossdk.PaymentStateSubscription
 import com.teya.unifiedepossdk.PrintStateDetails
 import com.teya.unifiedepossdk.PrintingStatusSubscription
+import com.teya.unifiedepossdk.RefundResultDetails
+import com.teya.unifiedepossdk.RefundResultSubscription
 import com.teya.unifiedepossdk.TeyaPosLinkSDK
+import com.teya.unifiedepossdk.models.GatewayPaymentId
+import com.teya.unifiedepossdk.models.TransactionType
 import com.teya.unifiedepossdk.poslink.PosLinkSDK
 import com.teya.unifiedepossdk.poslink.PosLinkTabsApi
 import com.teya.unifiedepossdk.poslink.TabEventListener
@@ -16,6 +22,7 @@ import com.teya.unifiedepossdk.poslink.models.tabs.Tab
 import com.teya.unifiedepossdk.poslink.models.tabs.TabId
 import com.teya.unifiedepossdk.poslink.models.tabs.TabPage
 import com.teya.unifiedepossdk.poslink.models.tabs.TabPaymentContext
+import com.teya.unifiedepossdk.poslink.models.tabs.TabPaymentMethod
 import com.teya.unifiedepossdk.poslink.models.tabs.TabSummary
 import java.util.UUID
 
@@ -83,8 +90,9 @@ object TeyaUtils {
 
         paymentSubscription.subscribe(
             object : PaymentStateSubscription.PaymentStateChangeListener {
-                override fun onPaymentStateChanged(state: PaymentStateSubscription.PaymentStateDetails) {
+                override fun onPaymentStateChanged(state: PaymentStateDetails) {
                     Log.d("SDK", "new state = $state, is it a final state = ${state.isFinal}")
+                    TransactionRecorder.recordPaymentIfFinal(state, TransactionType.Payment)
                 }
             }
         )
@@ -108,6 +116,60 @@ object TeyaUtils {
                     Log.d("SDK", "Printing state changed: $printStateDetails")
                 }
             }
+        )
+    }
+
+    // ---- Refund ----
+
+    fun refundPayment(
+        gatewayPaymentId: String,
+        amountMinor: Int,
+        currency: String,
+        onSettled: () -> Unit,
+    ) {
+        teyaPosLinkSDK.transactionsApi.refundPayment(
+            paymentId = GatewayPaymentId(gatewayPaymentId),
+            amount = amountMinor,
+            currency = currency,
+        ).subscribe(
+            object : RefundResultSubscription.RefundResultListener {
+                override fun onRefundResult(refundResult: RefundResultDetails) {
+                    Log.d("SDK", "Refund result: $refundResult")
+                    TransactionRecorder.recordRefund(
+                        refundResult = refundResult,
+                        gatewayPaymentId = gatewayPaymentId,
+                        amountMinor = amountMinor,
+                        currency = currency,
+                    )
+                    onSettled()
+                }
+            }
+        )
+    }
+
+    fun makeUnreferencedRefund(amount: Int) {
+        val refundSubscription = teyaPosLinkSDK.transactionsApi.makeUnreferencedRefund(
+            transactionId = UUID.randomUUID().toString(),
+            amount = amount,
+            currency = CURRENCY_CODE,
+        )
+
+        refundSubscription.subscribe(
+            object : PaymentStateSubscription.PaymentStateChangeListener {
+                override fun onPaymentStateChanged(state: PaymentStateDetails) {
+                    Log.d("SDK", "unreferenced refund state = $state, final = ${state.isFinal}")
+                    TransactionRecorder.recordPaymentIfFinal(state, TransactionType.Refund)
+                }
+            }
+        )
+
+        refundSubscription.subscribe(
+            TeyaPosLinkPaymentInProgressUi(
+                autoDismissOnFinalStateAfterMs = 2000,
+                onDismiss = {
+                    Log.d("SDK", "Unreferenced refund UI dismissed with details: $it")
+                }
+            )
         )
     }
 
@@ -188,7 +250,7 @@ object TeyaUtils {
         )
     }
 
-    /** Responds to a PAY_REQUEST by starting a tab-tagged payment and logging its state. */
+    /** Responds to a PAY_REQUEST by starting a tab-tagged payment and recording its final state. */
     fun makeTabPayment(tabContext: TabPaymentContext, amount: Int, currency: String) {
         val subscription = teyaPosLinkSDK.transactionsApi.makePayment(
             transactionId = UUID.randomUUID().toString(),
@@ -199,8 +261,14 @@ object TeyaUtils {
         )
         subscription.subscribe(
             object : PaymentStateSubscription.PaymentStateChangeListener {
-                override fun onPaymentStateChanged(state: PaymentStateSubscription.PaymentStateDetails) {
+                override fun onPaymentStateChanged(state: PaymentStateDetails) {
                     Log.d("SDK", "Tab payment state = $state, final = ${state.isFinal}")
+                    TransactionRecorder.recordPaymentIfFinal(
+                        state,
+                        TransactionType.Payment,
+                        isTab = true,
+                        isCash = tabContext.method == TabPaymentMethod.CASH,
+                    )
                 }
             }
         )

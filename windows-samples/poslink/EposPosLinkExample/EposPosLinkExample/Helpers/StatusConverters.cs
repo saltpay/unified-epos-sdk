@@ -1,4 +1,5 @@
 using System;
+using EposPosLinkExample.Models;
 using EposPosLinkExample.Models.Tabs;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
@@ -21,6 +22,17 @@ internal static class StatusVoice
         _ => ("Unknown", TagVoice.Neutral),
     };
 
+    public static (string Label, TagVoice Voice) ForTransaction(TransactionRecord record)
+    {
+        // Friendly label + voice from the record's type and its final success flag.
+        if (!record.IsSuccess)
+            return ("Failed", TagVoice.Critical);
+
+        return record.Type == TransactionType.Refund
+            ? ("Refunded", TagVoice.Info)
+            : ("Paid", TagVoice.Positive);
+    }
+
     public static (string Label, TagVoice Voice) ForPayment(PaymentState state) => state switch
     {
         PaymentState.SUCCESSFUL => ("Paid", TagVoice.Positive),
@@ -34,6 +46,7 @@ internal static class StatusVoice
     {
         TabStatus t => ForTab(t),
         PaymentState p => ForPayment(p),
+        TransactionRecord r => ForTransaction(r),
         _ => (value?.ToString() ?? "", TagVoice.Neutral),
     };
 

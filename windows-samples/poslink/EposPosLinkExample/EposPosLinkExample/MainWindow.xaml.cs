@@ -32,6 +32,9 @@ public sealed partial class MainWindow : Window
                 case "pat":
                     ContentFrame.Navigate(typeof(PayAtTablePage));
                     break;
+                case "history":
+                    ContentFrame.Navigate(typeof(TransactionHistoryPage));
+                    break;
             }
         }
     }

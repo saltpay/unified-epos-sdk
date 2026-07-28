@@ -9,6 +9,8 @@ struct BottomBar: View {
     let onPay: () -> Void
     let onPrint: () -> Void
     let payEnabled: Bool
+    let unreferencedRefund: Bool
+    let onUnreferencedRefundChange: (Bool) -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -39,6 +41,20 @@ struct BottomBar: View {
                 )
 
                 HStack(spacing: 8) {
+                    LemonadeUi.Checkbox(
+                        status: unreferencedRefund ? .checked : .unchecked,
+                        onCheckboxClicked: { onUnreferencedRefundChange(!unreferencedRefund) }
+                    )
+                    LemonadeUi.Text(
+                        "Unreferenced refund",
+                        textStyle: LemonadeTypography.shared.bodyMediumRegular
+                    )
+                    Spacer()
+                }
+                .contentShape(Rectangle())
+                .onTapGesture { onUnreferencedRefundChange(!unreferencedRefund) }
+
+                HStack(spacing: 8) {
                     LemonadeUi.Button(
                         label: "Print",
                         onClick: onPrint,
@@ -50,7 +66,9 @@ struct BottomBar: View {
                     .frame(maxWidth: .infinity)
 
                     LemonadeUi.Button(
-                        label: "Pay \(PriceUtils.formatPrice(total))",
+                        label: unreferencedRefund
+                            ? "Refund \(PriceUtils.formatPrice(subtotal))"
+                            : "Pay \(PriceUtils.formatPrice(total))",
                         onClick: onPay,
                         size: .large,
                         enabled: payEnabled
