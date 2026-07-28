@@ -1,6 +1,7 @@
 .idea/
 .kotlin/
 .DS_Store
+.mcp.json
 
 # Xcode
 xcuserdata/

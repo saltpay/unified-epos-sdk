@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example</groupId>
+    <artifactId>EposPosLinkExample</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>EposPosLinkExample</name>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>17</maven.compiler.release>
+        <javafx.version>21.0.6</javafx.version>
+        <teya.sdk.version>1.8.0</teya.sdk.version>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>central</id>
+            <url>https://repo1.maven.org/maven2</url>
+        </repository>
+        <!-- Required for the SDK's androidx.* transitive dependencies. -->
+        <repository>
+            <id>google</id>
+            <url>https://maven.google.com</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
+        <!--
+            Teya Unified ePOS SDK. The artifact id ends in your target platform:
+            macos-arm64, macos-x64, windows-x64, windows-arm64, linux-x64 or
+            linux-arm64. It is a pom-only aggregator, so it must be declared
+            with <type>pom</type>.
+        -->
+        <dependency>
+            <groupId>com.teya.epos</groupId>
+            <artifactId>unified-sdk-poslink-jvm-macos-arm64</artifactId>
+            <version>${teya.sdk.version}</version>
+            <type>pom</type>
+        </dependency>
+
+        <!--
+            The SDK draws its own login/device-linking window and marshals callbacks
+            onto the UI thread, which needs a coroutines dispatcher on the classpath.
+        -->
+        <dependency>
+            <groupId>org.jetbrains.kotlinx</groupId>
+            <artifactId>kotlinx-coroutines-swing</artifactId>
+            <version>1.10.2</version>
+        </dependency>
+
+        <!--
+            The SDK needs Kotlin 2.2 or newer. Maven's nearest-wins resolution would
+            otherwise pick the older stdlib that kotlinx-coroutines brings in.
+        -->
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib</artifactId>
+            <version>2.2.20</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <version>0.0.8</version>
+                <configuration>
+                    <mainClass>com.example.eposposlinkexample.Launcher</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
