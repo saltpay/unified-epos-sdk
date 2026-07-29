@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane xmlns:fx="http://javafx.com/fxml"
+           fx:controller="com.example.eposposlinkexample.ui.tables.PayAtTableController">
+
+    <!-- List state -->
+    <VBox fx:id="listPane" spacing="12">
+        <padding>
+            <Insets top="16" right="16" bottom="16" left="16"/>
+        </padding>
+        <HBox alignment="CENTER_LEFT">
+            <Label text="Pay at Table" style="-fx-font-size: 18; -fx-font-weight: bold;"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button fx:id="refreshListButton" text="Refresh"/>
+        </HBox>
+        <CheckBox fx:id="patToggle" text="Pay at Table on store"/>
+        <StackPane VBox.vgrow="ALWAYS">
+            <Label fx:id="noTablesLabel" text="No tables" style="-fx-text-fill: #6b6a67;"/>
+            <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;">
+                <FlowPane fx:id="tilesPane" hgap="12" vgap="12"/>
+            </ScrollPane>
+        </StackPane>
+        <HBox>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button fx:id="addTableButton" text="Add table" style="-fx-base: #1447e6; -fx-text-fill: white;"/>
+        </HBox>
+    </VBox>
+
+    <!-- Details state -->
+    <VBox fx:id="detailsPane" spacing="12" visible="false" managed="false">
+        <padding>
+            <Insets top="16" right="16" bottom="16" left="16"/>
+        </padding>
+        <HBox alignment="CENTER_LEFT" spacing="8">
+            <Button fx:id="backButton" text="← Back"/>
+            <Label fx:id="detailNameLabel" style="-fx-font-size: 16; -fx-font-weight: bold;"/>
+            <Label fx:id="detailStatusLabel" style="-fx-text-fill: #6b6a67;"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button fx:id="refreshDetailButton" text="Refresh"/>
+        </HBox>
+        <HBox fx:id="billRow" alignment="CENTER_LEFT" spacing="8" visible="false" managed="false">
+            <Label text="Bill showing on terminal:"/>
+            <Label fx:id="detailBillTerminalLabel" style="-fx-text-fill: #1447e6;"/>
+        </HBox>
+        <Label fx:id="paymentInProgressLabel" text="Payment in progress…" visible="false" managed="false"
+               style="-fx-text-fill: #1447e6;"/>
+        <Label text="Current items" style="-fx-font-weight: bold;"/>
+        <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">
+            <VBox fx:id="detailItems" spacing="8"/>
+        </ScrollPane>
+        <HBox spacing="8">
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button fx:id="closeTableButton" text="Close table" style="-fx-text-fill: #e41e2b;"/>
+            <Button fx:id="addItemsButton" text="Add items" style="-fx-base: #1447e6; -fx-text-fill: white;"/>
+        </HBox>
+        <HBox alignment="CENTER_LEFT" spacing="8">
+            <Label fx:id="paymentsCountLabel" text="No payments yet"/>
+            <Button fx:id="viewPaymentsButton" text="View payments" visible="false" managed="false"/>
+        </HBox>
+        <Separator/>
+        <HBox alignment="CENTER_LEFT">
+            <Label text="Total" style="-fx-font-weight: bold;"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="detailTotalLabel" text="£0.00" style="-fx-text-fill: #1447e6; -fx-font-weight: bold;"/>
+        </HBox>
+    </VBox>
+</StackPane>

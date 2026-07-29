@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.MenuButton?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.example.eposposlinkexample.ui.shell.ShellController"
+            prefWidth="960" prefHeight="680">
+
+    <left>
+        <VBox spacing="8" minWidth="190" style="-fx-background-color: #f5f4f2;">
+            <padding>
+                <Insets top="16" right="12" bottom="16" left="12"/>
+            </padding>
+            <ToggleButton fx:id="saleTab" text="Sale" maxWidth="Infinity"/>
+            <ToggleButton fx:id="payAtTableTab" text="Pay at Table" maxWidth="Infinity"/>
+            <ToggleButton fx:id="historyTab" text="History" maxWidth="Infinity"/>
+            <Region VBox.vgrow="ALWAYS"/>
+            <MenuButton fx:id="settingsMenu" text="Settings" maxWidth="Infinity">
+                <items>
+                    <MenuItem text="Clear User Auth" onAction="#onClearUserAuth"/>
+                    <MenuItem text="Clear Device Link" onAction="#onClearDeviceLink"/>
+                </items>
+            </MenuButton>
+        </VBox>
+    </left>
+
+    <top>
+        <HBox style="-fx-background-color: #eaf2ff;">
+            <padding>
+                <Insets top="10" right="16" bottom="10" left="16"/>
+            </padding>
+            <Label fx:id="statusLabel" text="Setting up SDK…"/>
+        </HBox>
+    </top>
+
+    <center>
+        <StackPane fx:id="contentArea"/>
+    </center>
+</BorderPane>

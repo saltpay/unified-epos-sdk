@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.example.eposposlinkexample.ui.history.TransactionHistoryController"
+      spacing="12">
+
+    <padding>
+        <Insets top="16" right="16" bottom="16" left="16"/>
+    </padding>
+
+    <Label text="Transaction History" style="-fx-font-size: 18; -fx-font-weight: bold;"/>
+
+    <ListView fx:id="transactionList" VBox.vgrow="ALWAYS">
+        <placeholder>
+            <Label text="No transactions yet. Complete a sale to see it here."
+                   style="-fx-text-fill: #6b6a67;"/>
+        </placeholder>
+    </ListView>
+</VBox>
