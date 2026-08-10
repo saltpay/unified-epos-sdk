@@ -402,7 +402,7 @@
 			repositoryURL = "https://github.com/saltpay/teya-unified-epos-sdk-pod-spm";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 1.8.0;
+				minimumVersion = 1.9.0;
 			};
 		};
 		AA00000000000000000000B5 /* XCRemoteSwiftPackageReference "lemonade-design-system" */ = {

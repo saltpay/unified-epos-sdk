@@ -38,7 +38,7 @@ import com.teya.lemonade.core.LemonadeButtonSize
 import com.teya.lemonade.core.LemonadeButtonType
 import com.teya.lemonade.core.LemonadeButtonVariant
 import com.teya.lemonade.core.TagVoice
-import com.teya.unifiedepossdk.PaymentStateSubscription
+import com.teya.unifiedepossdk.PaymentState
 import com.teya.unifiedepossdk.poslink.models.tabs.PaymentRequestSummary
 import com.teya.unifiedepossdk.poslink.models.tabs.Tab
 import com.teya.unifiedepossdk.poslink.models.tabs.TabPaymentMethod
@@ -443,12 +443,12 @@ private fun formatTimestamp(epochMillis: Long): String =
     SimpleDateFormat("dd/MM/yy · HH:mm", Locale.getDefault()).format(Date(epochMillis))
 
 @Composable
-private fun PaymentStatusTag(state: PaymentStateSubscription.PaymentState) {
+private fun PaymentStatusTag(state: PaymentState) {
     val (voice, label) = when (state) {
-        PaymentStateSubscription.PaymentState.Successful -> TagVoice.Positive to "Paid"
-        PaymentStateSubscription.PaymentState.Canceled -> TagVoice.Neutral to "Canceled"
-        PaymentStateSubscription.PaymentState.ProcessingFailed -> TagVoice.Critical to "Failed"
-        PaymentStateSubscription.PaymentState.CommunicationFailed -> TagVoice.Critical to "Failed"
+        PaymentState.Successful -> TagVoice.Positive to "Paid"
+        PaymentState.Canceled -> TagVoice.Neutral to "Canceled"
+        PaymentState.ProcessingFailed -> TagVoice.Critical to "Failed"
+        PaymentState.CommunicationFailed -> TagVoice.Critical to "Failed"
         else -> TagVoice.Info to state.name
     }
     LemonadeUi.Tag(label = label, voice = voice)
