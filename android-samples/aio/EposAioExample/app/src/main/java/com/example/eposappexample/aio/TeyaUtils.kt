@@ -2,12 +2,14 @@ package com.example.eposappexample.aio
 
 import android.util.Log
 import com.example.eposappexample.aio.models.Product
+import com.example.eposappexample.aio.transactions.TransactionRecorder
 import com.teya.sdkutilities.Logger
 import com.teya.unifiedepossdk.PaymentStateDetails
 import com.teya.unifiedepossdk.PaymentStateSubscription
 import com.teya.unifiedepossdk.PrintStateDetails
 import com.teya.unifiedepossdk.PrintingStatusSubscription
 import com.teya.unifiedepossdk.RefundResultDetails
+import com.teya.unifiedepossdk.RefundResultSubscription
 import com.teya.unifiedepossdk.TeyaCommonTransactionsApi
 import com.teya.unifiedepossdk.aio.AllInOneSDK
 import com.teya.unifiedepossdk.aio.MissedResponseListener
@@ -20,6 +22,7 @@ import com.teya.unifiedepossdk.models.RowElement
 import com.teya.unifiedepossdk.models.TableHeaderCell
 import com.teya.unifiedepossdk.models.TableRow
 import com.teya.unifiedepossdk.models.Template
+import com.teya.unifiedepossdk.models.TransactionType
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -124,6 +127,40 @@ object TeyaUtils {
             object : PaymentStateSubscription.PaymentStateChangeListener {
                 override fun onPaymentStateChanged(state: PaymentStateDetails) {
                     Log.d("SDK", "new state = $state, is it a final state = ${state.isFinal}")
+                    TransactionRecorder.recordPaymentIfFinal(state, TransactionType.Payment)
+                }
+            }
+        )
+    }
+
+    fun refundPayment(
+        gatewayPaymentId: String,
+        amountMinor: Int,
+        currency: String,
+        onSettled: () -> Unit,
+    ) {
+        val api = transactionsApi
+        if (api == null) {
+            Log.e("SDK", "Transactions API not set up")
+            onSettled()
+            return
+        }
+
+        api.refundPayment(
+            paymentId = GatewayPaymentId(gatewayPaymentId),
+            amount = amountMinor,
+            currency = currency,
+        ).subscribe(
+            object : RefundResultSubscription.RefundResultListener {
+                override fun onRefundResult(refundResult: RefundResultDetails) {
+                    Log.d("SDK", "Refund result: $refundResult")
+                    TransactionRecorder.recordRefund(
+                        refundResult = refundResult,
+                        gatewayPaymentId = gatewayPaymentId,
+                        amountMinor = amountMinor,
+                        currency = currency,
+                    )
+                    onSettled()
                 }
             }
         )

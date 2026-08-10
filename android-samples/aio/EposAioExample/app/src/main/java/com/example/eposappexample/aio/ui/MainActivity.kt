@@ -18,24 +18,39 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.example.eposappexample.aio.TeyaUtils
 import com.example.eposappexample.aio.currencySymbol
 import com.example.eposappexample.aio.formatPrice
 import com.example.eposappexample.aio.isValidTipInput
 import com.example.eposappexample.aio.models.Product
+import com.example.eposappexample.aio.ui.history.TransactionHistoryScreen
 import com.example.eposappexample.aio.ui.theme.EposAppExampleTheme
 import com.teya.lemonade.Button
 import com.teya.lemonade.Card
+import com.teya.lemonade.Icon
 import com.teya.lemonade.LemonadeTheme
 import com.teya.lemonade.LemonadeUi
 import com.teya.lemonade.Text
@@ -45,6 +60,7 @@ import com.teya.lemonade.core.LemonadeButtonType
 import com.teya.lemonade.core.LemonadeButtonVariant
 import com.teya.lemonade.core.LemonadeCardBackground
 import com.teya.lemonade.core.LemonadeCardPadding
+import com.teya.lemonade.core.LemonadeIcons
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,10 +69,66 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             EposAppExampleTheme {
-                MainScreen()
+                AppRoot()
             }
         }
     }
+}
+
+@Composable
+private fun AppRoot() {
+    val navController = rememberNavController()
+    Scaffold(
+        bottomBar = {
+            val backStackEntry by navController.currentBackStackEntryAsState()
+            val currentDestination = backStackEntry?.destination
+            Column {
+                HorizontalDivider()
+                NavigationBar {
+                    Destination.entries.forEach { dest ->
+                        NavigationBarItem(
+                            selected = currentDestination?.hierarchy?.any { it.route == dest.route } == true,
+                            onClick = {
+                                navController.navigate(dest.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            },
+                            icon = dest.icon,
+                            label = { LemonadeUi.Text(dest.label) }
+                        )
+                    }
+                }
+            }
+        }
+    ) { padding ->
+        NavHost(
+            navController = navController,
+            startDestination = Destination.Sale.route,
+            modifier = Modifier.padding(padding)
+        ) {
+            composable(Destination.Sale.route) { MainScreen() }
+            composable(Destination.History.route) { TransactionHistoryScreen() }
+        }
+    }
+}
+
+private enum class Destination(
+    val route: String,
+    val label: String,
+    val icon: @Composable () -> Unit
+) {
+    Sale(
+        "sale",
+        "Sale",
+        { LemonadeUi.Icon(icon = LemonadeIcons.Basket, contentDescription = null) }),
+    History(
+        "history",
+        "History",
+        { Icon(Icons.Default.DateRange, contentDescription = null) })
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -24,3 +24,6 @@ fun isValidTipInput(input: String): Boolean {
     }
     return !(dotIndex >= 0 && input.length - dotIndex - 1 > 2)
 }
+
+/** Formats an amount given in minor units (e.g. pence) as a currency string, e.g. 1500 -> "£15.00". */
+fun formatMinor(amountMinor: Int): String = formatPrice(amountMinor / 100.0)
