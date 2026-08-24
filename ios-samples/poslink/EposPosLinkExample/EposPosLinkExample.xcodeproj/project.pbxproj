@@ -399,7 +399,7 @@
 /* Begin XCRemoteSwiftPackageReference section */
 		4F5D42B52F3A0EF9008DAF8A /* XCRemoteSwiftPackageReference "teya-unified-epos-sdk-pod-spm" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/saltpay/teya-unified-epos-sdk-pod-spm";
+			repositoryURL = "https://github.com/teya-engineering/teya-unified-epos-sdk-pod-spm";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 1.8.0;
