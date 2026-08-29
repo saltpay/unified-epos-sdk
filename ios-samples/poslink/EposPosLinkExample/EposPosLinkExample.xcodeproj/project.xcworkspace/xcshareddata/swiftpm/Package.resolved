@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/teya-engineering/teya-unified-epos-sdk-pod-spm",
       "state" : {
-        "revision" : "0d8ea23965d465e2d7265841f79b586e292cba2f",
-        "version" : "1.8.0"
+        "revision" : "2016f61783d8d6500daf67b3a0e934bece9df074",
+        "version" : "1.9.0"
       }
     }
   ],

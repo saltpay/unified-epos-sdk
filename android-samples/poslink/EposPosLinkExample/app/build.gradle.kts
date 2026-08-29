@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.example.eposappexample.poslink"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.example.eposappexample.poslink"
@@ -44,7 +44,7 @@ android {
 }
 
 dependencies {
-    implementation("com.teya.epos:unified-sdk-poslink:1.8.0")
+    implementation("com.teya.epos:unified-sdk-poslink:1.9.0")
 
     implementation(libs.lemonade.ui)
     implementation(libs.androidx.core.ktx)

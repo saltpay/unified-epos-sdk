@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.example.eposappexample.aio"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.example.eposappexample.aio"
@@ -44,13 +44,14 @@ android {
 }
 
 dependencies {
-    implementation("com.teya.epos:unified-sdk-all-in-one:1.7.0")
+    implementation("com.teya.epos:unified-sdk-all-in-one:1.9.0")
 
     implementation(libs.lemonade.ui)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.material.icons.core)
+    implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)

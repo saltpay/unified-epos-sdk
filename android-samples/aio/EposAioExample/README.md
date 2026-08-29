@@ -1,6 +1,9 @@
 # Android All-In-One Sample App
 
-A sample Android app demonstrating integration with the Teya Unified ePOS SDK using **All-In-One (AIO)**. The app implements a simple point-of-sale flow: browsing a product catalog, adding items to a basket, processing a payment with optional tip, and printing a receipt.
+A sample Android app demonstrating integration with the Teya Unified ePOS SDK using **All-In-One (AIO)**. The app has two flows, switchable via the bottom navigation bar:
+
+- **Sale** — a simple point-of-sale flow: browse a product catalog, add items to a basket, take a payment with optional tip, and print a receipt.
+- **History** — the transactions taken in this session, with the option to refund a payment.
 
 Documentation for the SDK using AIO on Android can be found [here](https://docs.teya.com/epos-sdk/all-in-one/android/getting-started).
 
@@ -19,5 +22,6 @@ Documentation for the SDK using AIO on Android can be found [here](https://docs.
 ## Tech Stack
 
 - **Language:** Kotlin
-- **UI:** Jetpack Compose with Material Design 3
+- **UI:** Jetpack Compose with Teya's **Lemonade** design system (`com.teya.foundation:lemonade-ui`)
+- **Navigation:** Navigation Compose (bottom navigation bar)
 - **Architecture:** ViewModel with Compose state
